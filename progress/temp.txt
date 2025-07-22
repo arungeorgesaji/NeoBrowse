@@ -1,0 +1,4 @@
+<u> - Underline
+<s> - Strikethrough
+<a> - Hyperlink(Need to add more attributes)
+

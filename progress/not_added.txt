@@ -1,0 +1,120 @@
+<html> - Root element
+<head> - Document metadata
+<body> - Main content
+<meta> - Metadata
+<link> - External resource link
+<style> - CSS styles
+<script> - JavaScript
+<noscript> - Fallback for scripts
+<base> - Base URL for relative links
+<template> - HTML template (not rendered by default)
+<header> - Introductory content
+<footer> - Footer content
+<nav> - Navigation links
+<main> - Main content
+<article> - Independent content
+<section> - Thematic grouping
+<aside> - Side content
+<address> - Contact info
+<div> - Generic container
+<span> - Inline container
+<pre> - Preformatted text
+<blockquote> - Block quotation
+<cite> - Citation
+<var> - Variable
+<samp> - Sample output
+<kbd> - Keyboard input
+<sub> - Subscript
+<sup> - Superscript
+<time> - Date/time
+<data> - Machine-readable data
+<mark> - Highlighted text
+<small> - Small text
+<del> - Deleted text
+<ins> - Inserted text
+<abbr> - Abbreviation
+<dfn> - Definition term
+<ruby>, <rt>, <rp> - Ruby annotations (for East Asian typography)
+<wbr> - Word break opportunity
+<ul> - Unordered list
+<dl> - Description list
+<dt> - Description term
+<dd> - Description details
+<a> - Hyperlink
+<img> - Image
+<picture> - Responsive images
+<figure> - Figure with caption
+<figcaption> - Figure caption
+<audio> - Audio player
+<video> - Video player
+<source> - Media source
+<track> - Subtitles/tracks
+<embed> - External plugin
+<object> - Embedded object
+<param> - Object parameter
+<map> - Image map
+<area> - Clickable area in image map
+<iframe> - Inline frame
+<form> - Form container
+<input> - Input field
+<textarea> - Multiline text input
+<button> - Clickable button
+<select> - Dropdown list
+<option> - Dropdown option
+<optgroup> - Grouped options
+<label> - Input label
+<fieldset> - Group form elements
+<legend> - Fieldset caption
+<datalist> - Predefined input options
+<output> - Form output
+<progress> - Progress bar
+<meter> - Scalar measurement 
+<table> - Table
+<thead> - Table header
+<tbody> - Table body
+<tfoot> - Table footer
+<tr> - Table row
+<th> - Table header cell
+<td> - Table data cell
+<caption> - Table caption
+<col> - Column properties
+<colgroup> - Column group
+<details> - Expandable details
+<summary> - Summary for <details>
+<dialog> - Dialog box
+<menu> - Menu (deprecated in favor of <nav>)
+<menuitem> - Menu item (deprecated)
+<acronym> (Use <abbr> instead)
+<applet> (Use <object>)
+<basefont>
+<big>
+<center>
+<dir> (Use <ul>)
+<font>
+<frame>, <frameset>, <noframes>
+<isindex>
+<strike> (Use <del> or <s>)
+<tt> (Use <code> or <pre>)
+<xmp> (Use <pre> or <code>)
+<slot> - Web Components slot
+<template> - HTML template 
+<fencedframe> - Nested browsing context with privacy features<selectedcontent> - Displays selected option content
+<bdi> - Bidirectional text isolation
+<bdo> - Bidirectional text override
+<svg> - SVG container
+<math> - MathML container 
+<canvas> - Graphics canvas
+<search> - Search-related content container
+<menu> - Semantic menu (you mention it's deprecated, but it's actually still valid)
+<ruby> - Ruby annotation container (you have the others but missing the main container) 
+<hgroup> - Heading group 
+<content> - Obsolete web component (replaced by <slot>)
+<shadow> - Obsolete web component
+<image> - Ancient precursor to <img>
+<marquee> - Scrolling text
+<menuitem> - Menu item (deprecated)
+<nobr> - No line breaks
+<noembed> - Fallback for <embed>
+<plaintext> - Raw text rendering
+<rb> - Ruby base text
+<rtc> - Ruby text container
