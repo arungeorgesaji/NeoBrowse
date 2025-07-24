@@ -1,6 +1,0 @@
-jsom - Parse HTML/CSS into a dom
-blessed - Render interactive TUI 
-Axios - Fetch web pages
-vm2 - Safely run webpage JS
-chalk - Style terminal text 
-sanitize-html - Remove unsafe HTML
