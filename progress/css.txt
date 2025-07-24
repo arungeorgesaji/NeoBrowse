@@ -1,0 +1,31 @@
+color (text color)
+font-weight (bold, normal, numeric values 600+ as bold)
+font-style (italic, normal)
+text-decoration (underline, line-through, none)
+text-align (left, center, right - for block elements)
+text-transform (uppercase, lowercase, capitalize)
+background-color (limited to terminal-supported colors)
+background (shorthand, extracting just the color)
+border / border-color (simple line borders)
+border-top, border-right, border-bottom, border-left
+padding (left/right padding in block elements)
+margin (vertical spacing only, since terminal has no horizontal margin)
+display (only block, none supported)
+visibility (visible, hidden)
+list-style-type (disc, circle, square, none)
+list-style-position (inside, outside)
+border-collapse (collapse, separate - for tables)
+line-height (extra newlines)
+width (px, % - limited to terminal width)
+height (only affects block elements)
+white-space (nowrap, pre, normal)
+opacity (only full 1 or 0 for visibility)
+box-shadow (approximated with borders or background colors)
+:hover (if mouse is enabled in blessed)
+:first-child / :last-child
+.class and #id selectors (already implemented)
+[attribute] selectors (basic support)
+
+
+
+

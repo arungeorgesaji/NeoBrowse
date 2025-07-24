@@ -1,4 +1,5 @@
-<u> - Underline
-<s> - Strikethrough
+Fix tables
 <a> - Hyperlink(Need to add more attributes)
-
+<style> - CSS styles
+<script> - JavaScript
+<noscript> - Fallback for scripts

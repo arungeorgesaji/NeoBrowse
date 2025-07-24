@@ -1,46 +1,7 @@
-<html> - Root element
-<head> - Document metadata
-<body> - Main content
-<meta> - Metadata
-<link> - External resource link
-<style> - CSS styles
-<script> - JavaScript
-<noscript> - Fallback for scripts
 <base> - Base URL for relative links
-<template> - HTML template (not rendered by default)
-<header> - Introductory content
-<footer> - Footer content
-<nav> - Navigation links
-<main> - Main content
-<article> - Independent content
-<section> - Thematic grouping
-<aside> - Side content
-<address> - Contact info
-<div> - Generic container
-<span> - Inline container
-<pre> - Preformatted text
-<blockquote> - Block quotation
-<cite> - Citation
-<var> - Variable
-<samp> - Sample output
-<kbd> - Keyboard input
-<sub> - Subscript
-<sup> - Superscript
-<time> - Date/time
-<data> - Machine-readable data
-<mark> - Highlighted text
-<small> - Small text
-<del> - Deleted text
-<ins> - Inserted text
-<abbr> - Abbreviation
-<dfn> - Definition term
 <ruby>, <rt>, <rp> - Ruby annotations (for East Asian typography)
 <wbr> - Word break opportunity
-<ul> - Unordered list
 <dl> - Description list
-<dt> - Description term
-<dd> - Description details
-<a> - Hyperlink
 <img> - Image
 <picture> - Responsive images
 <figure> - Figure with caption
@@ -69,13 +30,6 @@
 <output> - Form output
 <progress> - Progress bar
 <meter> - Scalar measurement 
-<table> - Table
-<thead> - Table header
-<tbody> - Table body
-<tfoot> - Table footer
-<tr> - Table row
-<th> - Table header cell
-<td> - Table data cell
 <caption> - Table caption
 <col> - Column properties
 <colgroup> - Column group
@@ -118,3 +72,6 @@
 <plaintext> - Raw text rendering
 <rb> - Ruby base text
 <rtc> - Ruby text container
+<metadata> - Metadata about the document
+<link> - Link to external resources
+<nav> - Navigation links
