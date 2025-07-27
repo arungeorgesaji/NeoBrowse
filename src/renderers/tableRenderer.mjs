@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { extractText } from './domHelpers.mjs';
+import { extractText } from '../utils/domHelpers.mjs';
 
 export function calculateColumnWidths(rows) {
   const widths = [];

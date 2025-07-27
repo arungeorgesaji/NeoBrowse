@@ -1,5 +1,8 @@
 Fix tables
 <a> - Hyperlink(Need to add more attributes)
-<style> - CSS styles
-<script> - JavaScript
-<noscript> - Fallback for scripts
+Fix search functionality
+Make switching between pages inside the tui itself
+Fix active tab cyan issue
+Add bookmarks 
+Add history
+Fix the warning system
