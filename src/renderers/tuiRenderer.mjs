@@ -3,12 +3,23 @@ import chalk from 'chalk';
 import { extractText } from '../utils/domHelpers.mjs';
 
 export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
+  if (global.currentScreen) {
+    global.currentScreen.destroy();
+  }
+
   const screen = blessed.screen({
     smartCSR: true,
-    title: `TextBrowser - ${pageTitle}`,
+    title: `NeoBrowse - ${pageTitle}`,
     dockBorders: true,
     fullUnicode: true,
     ignoreDockContrast: true
+  });
+
+  global.currentScreen = screen;
+
+  screen.on('resize', () => {
+    screen.emit('repaint');
+    screen.render();
   });
 
   const cleanAndNavigate = (url) => {
@@ -94,7 +105,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     height: 1,
     width: '100%',
     tags: true,
-    content: `{bold}TextBrowser{/bold} | Active: {bold}${pageTitle}{/bold}`,
+    content: `{bold}NeoBrowse{/bold} | Active: {bold}${pageTitle}{/bold}`,
     style: {
       bg: 'blue',
       fg: 'white'
@@ -107,8 +118,8 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     width: '100%',
     tags: true,
     content: [
-      '{bold}Navigation:{/} [N]ew URL  [B]ack  [F]orward  [R]eload  [S]earch  [T]ab: New/Close',
-      '{bold}Scrolling:{/} Arrows  PgUp/PgDn  Mouse',
+      '{bold}Navigation:{/} [N]ew URL  [B]ack  [F]orward  [R]eload  [S]earch  [H]istory',
+      '{bold}Tabs:{/} [T]ab: New/Close  [1-9] Switch',
       '{bold}Quit:{/} [Q]uit  Ctrl+C'
     ].join(' | '),
     style: {
@@ -186,6 +197,12 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     cleanAndNavigate('reload');
   });
 
+  screen.key('h', () => {
+    if (tabOptions.onShowHistory) {
+      tabOptions.onShowHistory();
+    }
+  });
+
   screen.key('s', () => {
     searchInput.show();
     searchInput.focus();
@@ -193,20 +210,8 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
       searchInput.hide();
       container.focus();
       if (value) {
-        const searchResult = content.toLowerCase().includes(value.toLowerCase());
-        if (searchResult) {
-          footer.setContent(chalk.green(`Found "${value}" in page`));
-        } else {
-          footer.setContent(chalk.red(`"${value}" not found`));
-        }
-        setTimeout(() => {
-          footer.setContent([
-            '{bold}Navigation:{/} [N]ew URL  [B]ack  [R]eload  [S]earch  [T]ab: New/Close',
-            '{bold}Scrolling:{/} Arrows  PgUp/PgDn  Mouse',
-            '{bold}Quit:{/} [Q]uit  Ctrl+C'
-          ].join(' | '));
-          screen.render();
-        }, 2000);
+        const searchQuery = encodeURIComponent(value);
+        cleanAndNavigate(`https://www.startpage.com/do/search?query=${searchQuery}`);
       }
       screen.render();
     });
@@ -250,14 +255,15 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
   });
 
   for (let i = 0; i < 9; i++) {
-    screen.key([`{i + 1}`], () => {
-      if (tabOptions.onSwitchTab) {
+    screen.key([`${i + 1}`], () => {  
+      if (tabOptions.onSwitchTab && i < tabOptions.tabs.length) {
         tabOptions.onSwitchTab(i);
         updateTabItems();
         screen.render();
       }
     });
   }
+
 
   screen.key(['up', 'down'], (ch, key) => {
     container.scroll(key.name === 'up' ? -1 : 1);

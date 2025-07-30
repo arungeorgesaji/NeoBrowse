@@ -63,11 +63,13 @@ class Tab {
   }
 }
 
-class TextBrowser {
+class NeoBrowse {
   constructor() {
     this.tabs = [];  
     this.activeTabIndex = -1;
     this.currentScreen = null;
+    this.warningTimeout = null;
+    this.originalFooterContent = null;
   }
 
   get activeTab() {
@@ -76,15 +78,29 @@ class TextBrowser {
 
   showWarning(message) {
     if (!this.currentScreen) return;
+    
+    if (this.warningTimeout) {
+      clearTimeout(this.warningTimeout);
+      this.warningTimeout = null;
+    }
+
     const footer = this.currentScreen.children.find(child => child.type === 'box' && child.position.bottom === 0);
     if (footer) {
-      const originalContent = footer.content;
-      footer.setContent(chalk.yellow(message));
+      if (!this.originalFooterContent) {
+        this.originalFooterContent = footer.content;
+      }
+      
+      footer.setContent(chalk.bgYellow.black(`${message}`));
       this.currentScreen.render();
-      setTimeout(() => {
-        footer.setContent(originalContent);
-        this.currentScreen.render();
-      }, 500);
+      
+      this.warningTimeout = setTimeout(() => {
+        if (this.originalFooterContent) {
+          footer.setContent(this.originalFooterContent);
+          this.currentScreen.render();
+        }
+        this.warningTimeout = null;
+        this.originalFooterContent = null;
+      }, 500); 
     }
   }
   
@@ -152,6 +168,10 @@ class TextBrowser {
 
   switchTab(index) {
     if (index >= 0 && index < this.tabs.length) {
+      if (this.currentScreen) {
+        this.currentScreen.destroy();
+      }
+
       this.activeTabIndex = index;
       const tab = this.activeTab;
       if (tab && tab.currentDocument) {
@@ -180,9 +200,73 @@ class TextBrowser {
         })),
         onNewTab: () => this.newTab(),
         onCloseTab: () => this.closeCurrentTab(),
-        onSwitchTab: (index) => this.switchTab(index)
+        onSwitchTab: (index) => this.switchTab(index),
+        onShowHistory: () => this.showHistory()
       }
     );
+  }
+
+  showHistory() {
+    try {
+      const tab = this.activeTab;
+      if (!tab || tab.history.length === 0) {
+        this.showWarning("No history available");
+        return;
+      }
+
+      const historyOverlay = blessed.box({
+        parent: this.currentScreen,
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        bg: 'black'
+      });
+
+      const historyBox = blessed.box({
+        parent: historyOverlay,
+        top: 'center',
+        left: 'center',
+        width: '80%',
+        height: '80%',
+        border: { type: 'line' },
+        style: {
+          border: { fg: 'cyan' },
+          bg: 'black'
+        },
+        scrollable: true,
+        keys: true,
+        mouse: true
+      });
+
+      let historyContent = chalk.bold('Navigation History:\n\n');
+      tab.history.forEach((url, index) => {
+        const prefix = index === tab.currentIndex ? chalk.green('→ ') : '  ';
+        historyContent += `${prefix}${index + 1}. ${url}\n`;
+      });
+
+      historyScreen.setContent(historyContent);
+      historyScreen.focus();
+
+      historyScreen.key(['escape', 'q'], () => {
+        historyOverlay.destroy();
+        this.currentScreen.render();
+      });
+
+      historyScreen.key(['enter'], () => {
+        const selectedIndex = blessed.getFocus(historyScreen).selected;
+        if (selectedIndex >= 0 && selectedIndex < tab.history.length) {
+          this.currentScreen.remove(historyScreen);
+          this.navigate(tab.history[selectedIndex]);
+        }
+      });
+
+      historyScreen.focus();
+      this.currentScreen.render();
+    } catch (err) {
+      console.error('History screen error:', err);
+      this.showWarning('Failed to show history');
+    }
   }
 }
 
@@ -190,7 +274,7 @@ async function main() {
   const args = process.argv.slice(2);
   const initialUrl = args[0] || 'https://arungeorgesaji.is-a.dev';
 
-  const browser = new TextBrowser();
+  const browser = new NeoBrowse();
   
   process.on('uncaughtException', (err) => {
     console.error(chalk.red('Uncaught Exception:'), err.message);
