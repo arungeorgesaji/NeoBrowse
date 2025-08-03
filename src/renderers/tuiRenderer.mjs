@@ -48,7 +48,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
       /\{underline\}\{cyan-fg\}(.*?)\{\/cyan-fg\}\{\/underline\}\{#(.*?)\}/g, 
       (match, text, url) => {
         links.push({ text, url, id: linkId++ });
-        return `{underline}{cyan-fg}[${linkId}] ${text}{/cyan-fg}{/underline}`;
+        return `{underline}{cyan-fg}[${linkId}] ${text}{/cyan-fg}{/underline} `;
       }
     );
     
@@ -76,6 +76,54 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     }
     
     container.setContent(newContent);
+    screen.render();
+  }
+
+  function scrollToLink(linkIndex) {
+    if (linkIndex < 0 || linkIndex >= links.length) return;
+    
+    const linkId = links[linkIndex].id + 1;
+    const linkText = `[${linkId}]`;
+    
+    const rawContent = container.getContent();
+    
+    const cleanContent = rawContent.replace(/\{[^}]*\}/g, '');
+    
+    const linkPos = cleanContent.indexOf(linkText);
+    if (linkPos === -1) return;
+    
+    const containerWidth = container.width - 2; 
+    const textBeforeLink = cleanContent.substring(0, linkPos);
+    
+    let lineNumber = 0;
+    let currentLineLength = 0;
+    
+    for (let i = 0; i < textBeforeLink.length; i++) {
+      const char = textBeforeLink[i];
+      
+      if (char === '\n') {
+        lineNumber++;
+        currentLineLength = 0;
+      } else {
+        currentLineLength++;
+        if (currentLineLength >= containerWidth) {
+          lineNumber++;
+          currentLineLength = 0;
+        }
+      }
+    }
+    
+    const currentScroll = container.getScroll();
+    const visibleHeight = container.height - 2; 
+    
+    const padding = 2; 
+    
+    if (lineNumber < currentScroll + padding) {
+      container.scrollTo(Math.max(0, lineNumber - padding));
+    } else if (lineNumber > currentScroll + visibleHeight - padding) {
+      container.scrollTo(lineNumber - visibleHeight + padding);
+    }
+    
     screen.render();
   }
 
@@ -338,6 +386,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     
     focusedLinkIndex = (focusedLinkIndex + 1) % links.length;
     highlightFocusedLink();
+    scrollToLink(focusedLinkIndex);
   });
 
   screen.key(['j', 'left'], () => {
@@ -345,6 +394,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     
     focusedLinkIndex = (focusedLinkIndex - 1 + links.length) % links.length;
     highlightFocusedLink();
+    scrollToLink(focusedLinkIndex);
   });
 
   screen.key(['enter'], () => {
