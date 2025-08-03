@@ -9,6 +9,7 @@ class Tab {
     this.currentIndex = -1; 
     this.currentUrl = '';
     this.currentDocument = null;
+    this.active = false;
   }
 
   async navigate(url) {
@@ -126,6 +127,10 @@ class NeoBrowse {
   async newTab(url = 'https://arungeorgesaji.is-a.dev') {
     const newTab = new Tab();
     this.tabs.push(newTab);
+
+    this.tabs.forEach(tab => tab.active = false);
+
+    newTab.active = true;
     this.activeTabIndex = this.tabs.length - 1;
     
     try {
@@ -152,8 +157,12 @@ class NeoBrowse {
     }
     
     this.tabs.splice(this.activeTabIndex, 1);
-    if (this.activeTabIndex >= this.tabs.length) {
+
+    if (this.tabs.length > 0) {
       this.activeTabIndex = this.tabs.length - 1;
+      this.tabs[this.activeTabIndex].active = true;
+    } else {
+      this.activeTabIndex = -1;
     }
     
     const tab = this.activeTab;
@@ -171,6 +180,10 @@ class NeoBrowse {
       if (this.currentScreen) {
         this.currentScreen.destroy();
       }
+
+      this.tabs.forEach(tab => tab.active = false);
+
+      this.tabs[index].active = true;
 
       this.activeTabIndex = index;
       const tab = this.activeTab;

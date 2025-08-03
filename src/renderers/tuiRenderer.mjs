@@ -42,33 +42,44 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
           bg: 'magenta',
           bold: true
         }
-      },
-      selected: {
-        bg: 'cyan',
-        bold: true,
-        underline: true
       }
     }
   });
 
   const updateTabItems = () => {
     const tabs = tabOptions.tabs || [];
-    const tabItems = tabs.map((tab, i) => ({
-      text: `${tab.title.substring(0, 20)}${tab.title.length > 20 ? '...' : ''}`,
-      style: {
-        bg: 'blue',
-        bold: tab.active
-      },
-      callback: () => {
-        if (tabOptions.onSwitchTab) {
-          tabOptions.onSwitchTab(i);
-          updateTabItems();
-          screen.render();
+    const tabItems = {};
+    
+    tabs.forEach((tab, i) => {
+      const isActive = tab.active;
+      const displayText = tab.title.substring(0, 20) + (tab.title.length > 20 ? '...' : '');
+      
+      tabItems[i] = {
+        text: displayText,  
+        callback: () => {
+          if (tabOptions.onSwitchTab) {
+              tabOptions.onSwitchTab(i);
+              updateTabItems();
+              screen.render();
+          }
         }
-      }
-    }));
+      };
+    });
+    
     tabBar.setItems(tabItems);
+    
+    tabs.forEach((tab, i) => {
+      const isActive = tab.active;
+      if (tabBar.items[i]) {
+        tabBar.items[i].style = {
+          bg: isActive ? 'cyan' : 'blue',
+          fg: isActive ? 'black' : 'white',
+          bold: isActive,
+        };
+      }
+    });
   };
+
 
   updateTabItems();
 
