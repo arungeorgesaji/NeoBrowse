@@ -1,11 +1,16 @@
 import blessed from 'blessed';
 import chalk from 'chalk';
 import { extractText } from '../utils/domHelpers.mjs';
+import { MAX_SPEED, BASE_SPEED, ACCELERATION } from '../constants/scrolling.mjs';
 
 export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
   let links = [];
   let focusedLinkIndex = -1;
   let currentlyHighlightedLinkId = null;
+
+  let scrollSpeed = 5; 
+  let scrollAcceleration = 0;
+  let scrollInterval = null;
 
   if (global.currentScreen) {
     global.currentScreen.destroy();
@@ -223,7 +228,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     width: '100%',
     tags: true,
     content: [
-      '{bold}Nav:{/} [N]ewURL  [B]ack  [F]wd  [R]eload  [S]earch  [H]istory\n' +
+      '{bold}Nav:{/} [N]ewURL  [B]ack  [F]orward  [R]eload  [S]earch  [H]istory\n' +
       '{bold}Links:{/} [L]Next  [H]Prev  [Enter]Open  [M]Bookmarks\n' +
       '{bold}Tabs:{/} [T]New  [W]Close  [1-9]Switch  [Tab]Cycle  [Q]uit',
     ].join(' | '),
@@ -340,14 +345,6 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     }
   });
 
-  screen.key(['M-t'], () => {
-    if (tabOptions.onNewTab) {
-      tabOptions.onNewTab();
-      updateTabItems();
-      screen.render();
-    }
-  });
-
   screen.key(['w'], () => {
     if (tabOptions.onCloseTab) {
       tabOptions.onCloseTab();
@@ -410,6 +407,36 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
   screen.key(['pageup', 'pagedown'], (ch, key) => {
     const scrollAmount = Math.floor(container.height / 2);
     container.scroll(key.name === 'pageup' ? -scrollAmount : scrollAmount);
+    screen.render();
+  });
+
+  screen.key(['space'], () => {
+    container.scroll(container.height);
+    screen.render();
+  });
+
+  screen.key(['M-space'], () => {
+    container.scroll(-(container.height));
+    screen.render();
+  });
+
+  screen.key(['home', 'g'], () => {
+    container.scrollTo(0);
+    screen.render();
+  });
+
+  screen.key(['end', 'M-g'], () => {
+    container.scrollTo(Infinity); 
+    screen.render();
+  });
+
+  screen.key(['d'], () => {
+    container.scroll(Math.floor(container.height / 2));
+    screen.render();
+  });
+
+  screen.key(['u'], () => {
+    container.scroll(-Math.floor(container.height / 2));
     screen.render();
   });
 
