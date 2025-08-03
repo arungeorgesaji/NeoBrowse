@@ -3,6 +3,10 @@ import chalk from 'chalk';
 import { extractText } from '../utils/domHelpers.mjs';
 
 export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
+  let links = [];
+  let focusedLinkIndex = -1;
+  let currentlyHighlightedLinkId = null;
+
   if (global.currentScreen) {
     global.currentScreen.destroy();
   }
@@ -35,6 +39,45 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
       return false;
     }
   };
+
+  function processContentWithLinks(content) {
+    links = [];
+    let linkId = 0;
+    
+    const processedContent = content.replace(
+      /\{underline\}\{cyan-fg\}(.*?)\{\/cyan-fg\}\{\/underline\}\{#(.*?)\}/g, 
+      (match, text, url) => {
+        links.push({ text, url, id: linkId++ });
+        return `{underline}{cyan-fg}[${linkId}] ${text}{/cyan-fg}{/underline}`;
+      }
+    );
+    
+    return processedContent;
+  }
+
+  function highlightFocusedLink() {
+    let newContent = content;
+    
+    if (currentlyHighlightedLinkId !== null) {
+      newContent = newContent.replace(
+        `{underline}{bold}{magenta-fg}[${currentlyHighlightedLinkId}]`,
+        '{underline}{cyan-fg}[' + currentlyHighlightedLinkId + ']'
+      );
+      currentlyHighlightedLinkId = null;
+    }
+    
+    if (focusedLinkIndex >= 0) {
+      const linkId = links[focusedLinkIndex].id + 1; 
+      newContent = newContent.replace(
+        `{underline}{cyan-fg}[${linkId}]`,
+        '{underline}{bold}{magenta-fg}[' + linkId + ']'
+      );
+      currentlyHighlightedLinkId = linkId; 
+    }
+    
+    container.setContent(newContent);
+    screen.render();
+  }
 
   const tabBar = blessed.listbar({
     top: 1,
@@ -113,7 +156,8 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
 
   let content = '';
   if (document.body) {
-    content = extractText(document.body, 0, tabOptions.tabs?.find(t => t.active)?.currentUrl || '');
+    const rawContent = extractText(document.body, 0, tabOptions.tabs?.find(t => t.active)?.currentUrl || '');
+    content = processContentWithLinks(rawContent);
   } else {
     content = chalk.red('No body content found');
   }
@@ -137,9 +181,9 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     width: '100%',
     tags: true,
     content: [
-      '{bold}Navigation:{/} [N]ew URL  [B]ack  [F]orward  [R]eload  [S]earch  [H]istory',
-      '{bold}Tabs:{/} [T]ab: New/Close  [1-9] Switch  [M]Bookmarks',
-      '{bold}Quit:{/} [Q]uit  Ctrl+C'
+      '{bold}Nav:{/} [N]ewURL  [B]ack  [F]wd  [R]eload  [S]earch  [H]istory\n' +
+      '{bold}Links:{/} [L]Next  [H]Prev  [Enter]Open  [M]Bookmarks\n' +
+      '{bold}Tabs:{/} [T]New  [W]Close  [1-9]Switch  [Tab]Cycle  [Q]uit',
     ].join(' | '),
     style: {
       bg: 'blue',
@@ -289,34 +333,24 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     });
   }
 
-  container.on('mouseover', (data) => {
-    const line = container.getLine(data.y - container.aleft);
-    if (line && line.includes('{underline}')) {
-      screen.cursorShape = 'block';
-    } else {
-      screen.cursorShape = 'line';
-    }
-    screen.render();
+  screen.key(['k', 'right'], () => {
+    if (links.length === 0) return;
+    
+    focusedLinkIndex = (focusedLinkIndex + 1) % links.length;
+    highlightFocusedLink();
   });
 
-  container.on('click', (data) => {
-    try {
-      const line = container.getLine(data.y - container.aleft);
-      if (!line) return;
-      
-      const linkMatch = line.match(/\{underline\}\{cyan-fg\}(.*?)\{\/cyan-fg\}\{\/underline\}\{#(.*?)\}/);
-      if (linkMatch && linkMatch[2]) {
-        const url = linkMatch[2];
-        if (data.ctrl) {
-          if (tabOptions.onNewTab) tabOptions.onNewTab(url);
-        } else {
-          cleanAndNavigate(url);
-        }
-        updateTabItems();
-        screen.render();
-      }
-    } catch (err) {
-      console.error('Link click error:', err);
+  screen.key(['j', 'left'], () => {
+    if (links.length === 0) return;
+    
+    focusedLinkIndex = (focusedLinkIndex - 1 + links.length) % links.length;
+    highlightFocusedLink();
+  });
+
+  screen.key(['enter'], () => {
+    if (focusedLinkIndex >= 0 && focusedLinkIndex < links.length) {
+      const link = links[focusedLinkIndex];
+      cleanAndNavigate(link.url);
     }
   });
 
