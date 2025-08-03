@@ -28,9 +28,22 @@ export function formatTextByTag(tagName, text, node, depth = 0) {
       return chalk.bold(`\n${text}\n`);
     case 'p':
       return chalk.white(`${text}\n\n`);
-    case 'a':
+    case 'a': {
       const href = node?.getAttribute('href') || '';
-      return chalk.cyan.underline(`${text}`) + chalk.gray(` (${href})`);
+      if (!href) return text;
+      
+      let absoluteUrl = href;
+      
+      try {
+        if (baseUrl && !href.startsWith('http://') && !href.startsWith('https://')) {
+          absoluteUrl = new URL(href, baseUrl).toString();
+        }
+      } catch (e) {
+        absoluteUrl = href;
+      }
+
+      return `{underline}{cyan-fg}${text}{/cyan-fg}{/underline}{#${absoluteUrl}}`;
+    }
     case 'strong':
     case 'b':
       return chalk.bold(text);

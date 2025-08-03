@@ -12,7 +12,9 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     title: `NeoBrowse - ${pageTitle}`,
     dockBorders: true,
     fullUnicode: true,
-    ignoreDockContrast: true
+    ignoreDockContrast: true,
+    mouse: true,
+    sendFocus: true,
   });
 
   global.currentScreen = screen;
@@ -23,9 +25,14 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
   });
 
   const cleanAndNavigate = (url) => {
-    const result = onNavigate(url);
-    if (result == false) {
-      screen.destroy();
+    if (!url || typeof url !== 'string') return false;
+    try {
+      new URL(url); 
+      const result = onNavigate(url);
+      if (result == false) screen.destroy();
+      return result;
+    } catch {
+      return false;
     }
   };
 
@@ -97,6 +104,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
       style: { inverse: true }
     },
     border: { type: 'line' },
+    tags: true, 
     style: {
       border: { fg: 'cyan' },
       focus: { border: { fg: 'white' } }
@@ -105,7 +113,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
 
   let content = '';
   if (document.body) {
-    content = extractText(document.body, 0);
+    content = extractText(document.body, 0, tabOptions.tabs?.find(t => t.active)?.currentUrl || '');
   } else {
     content = chalk.red('No body content found');
   }
@@ -130,7 +138,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     tags: true,
     content: [
       '{bold}Navigation:{/} [N]ew URL  [B]ack  [F]orward  [R]eload  [S]earch  [H]istory',
-      '{bold}Tabs:{/} [T]ab: New/Close  [1-9] Switch',
+      '{bold}Tabs:{/} [T]ab: New/Close  [1-9] Switch  [M]Bookmarks',
       '{bold}Quit:{/} [Q]uit  Ctrl+C'
     ].join(' | '),
     style: {
@@ -214,6 +222,12 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     }
   });
 
+  screen.key('m', () => {
+    if (tabOptions.onShowBookmarks) {
+      tabOptions.onShowBookmarks();
+    }
+  });
+
   screen.key('s', () => {
     searchInput.show();
     searchInput.focus();
@@ -275,6 +289,36 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     });
   }
 
+  container.on('mouseover', (data) => {
+    const line = container.getLine(data.y - container.aleft);
+    if (line && line.includes('{underline}')) {
+      screen.cursorShape = 'block';
+    } else {
+      screen.cursorShape = 'line';
+    }
+    screen.render();
+  });
+
+  container.on('click', (data) => {
+    try {
+      const line = container.getLine(data.y - container.aleft);
+      if (!line) return;
+      
+      const linkMatch = line.match(/\{underline\}\{cyan-fg\}(.*?)\{\/cyan-fg\}\{\/underline\}\{#(.*?)\}/);
+      if (linkMatch && linkMatch[2]) {
+        const url = linkMatch[2];
+        if (data.ctrl) {
+          if (tabOptions.onNewTab) tabOptions.onNewTab(url);
+        } else {
+          cleanAndNavigate(url);
+        }
+        updateTabItems();
+        screen.render();
+      }
+    } catch (err) {
+      console.error('Link click error:', err);
+    }
+  });
 
   screen.key(['up', 'down'], (ch, key) => {
     container.scroll(key.name === 'up' ? -1 : 1);
