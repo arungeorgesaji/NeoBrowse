@@ -21,6 +21,7 @@ class Tab {
 
   async navigate(url) {
     try {
+      console.log(url);
       if (url === 'back') {
         if (this.currentIndex > 0) {
           this.currentIndex--;

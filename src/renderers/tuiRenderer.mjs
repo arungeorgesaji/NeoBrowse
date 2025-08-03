@@ -29,14 +29,9 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
   });
 
   const cleanAndNavigate = (url) => {
-    if (!url || typeof url !== 'string') return false;
-    try {
-      new URL(url); 
-      const result = onNavigate(url);
-      if (result == false) screen.destroy();
-      return result;
-    } catch {
-      return false;
+    const result = onNavigate(url);
+    if (result == false) {
+      screen.destroy();
     }
   };
 
@@ -56,23 +51,22 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
   }
 
   function highlightFocusedLink() {
-    let newContent = content;
-    
-    if (currentlyHighlightedLinkId !== null) {
-      newContent = newContent.replace(
-        `{underline}{bold}{magenta-fg}[${currentlyHighlightedLinkId}]`,
-        '{underline}{cyan-fg}[' + currentlyHighlightedLinkId + ']'
+    let newContent = content.replace(
+        /\{underline\}\{bold\}\{magenta-fg\}\[(\d+)\](.*?)\{\/magenta-fg\}\{\/bold\}\{\/underline\}/g,
+        '{underline}{cyan-fg}[$1]$2{/cyan-fg}{/underline}'
+    );
+
+    if (focusedLinkIndex >= 0 && focusedLinkIndex < links.length) {
+      const linkId = links[focusedLinkIndex].id + 1;
+      const linkRegex = new RegExp(
+        `\\{underline\\}\\{cyan-fg\\}\\[${linkId}\\](.*?)\\{/cyan-fg\\}\\{/underline\\}`,
+        'g'
       );
-      currentlyHighlightedLinkId = null;
-    }
-    
-    if (focusedLinkIndex >= 0) {
-      const linkId = links[focusedLinkIndex].id + 1; 
+      
       newContent = newContent.replace(
-        `{underline}{cyan-fg}[${linkId}]`,
-        '{underline}{bold}{magenta-fg}[' + linkId + ']'
+        linkRegex,
+        `{underline}{bold}{magenta-fg}[${linkId}]$1{/magenta-fg}{/bold}{/underline}`
       );
-      currentlyHighlightedLinkId = linkId; 
     }
     
     container.setContent(newContent);
@@ -290,6 +284,10 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
       urlInput.hide();
       container.focus();
       if (value && onNavigate) {
+        if (!value.startsWith('http://') && !value.startsWith('https://')) {
+          value = 'https://' + value;
+        }
+
         cleanAndNavigate(value);
       }
       screen.render();
