@@ -40,7 +40,12 @@ class Tab {
         url = this.currentUrl;
       } else {
         this.history = this.history.slice(0, this.currentIndex + 1);
+
         url = this.normalizeUrl(url);
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          url = 'https://' + url;
+        }
+
         this.history.push(url);
         this.currentIndex = this.history.length - 1;
       }

@@ -1,7 +1,6 @@
 import blessed from 'blessed';
 import chalk from 'chalk';
 import { extractText } from '../utils/domHelpers.mjs';
-import { MAX_SPEED, BASE_SPEED, ACCELERATION } from '../constants/scrolling.mjs';
 
 export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
   let links = [];
@@ -32,13 +31,6 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     screen.emit('repaint');
     screen.render();
   });
-
-  const cleanAndNavigate = (url) => {
-    const result = onNavigate(url);
-    if (result == false) {
-      screen.destroy();
-    }
-  };
 
   function processContentWithLinks(content) {
     links = [];
@@ -293,22 +285,22 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
           value = 'https://' + value;
         }
 
-        cleanAndNavigate(value);
+        onNavigate(value);
       }
       screen.render();
     });
   });
 
   screen.key('b', () => {
-    cleanAndNavigate('back');
+    onNavigate('back');
   });
 
   screen.key('f', () => {
-    cleanAndNavigate('forward');
+    onNavigate('forward');
   });;
 
   screen.key('r', () => {
-    cleanAndNavigate('reload');
+    onNavigate('reload');
   });
 
   screen.key('h', () => {
@@ -331,7 +323,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
       container.focus();
       if (value) {
         const searchQuery = encodeURIComponent(value);
-        cleanAndNavigate(`https://www.startpage.com/do/search?query=${searchQuery}`);
+        onNavigate(`https://www.startpage.com/do/search?query=${searchQuery}`);
       }
       screen.render();
     });
@@ -395,7 +387,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
   screen.key(['enter'], () => {
     if (focusedLinkIndex >= 0 && focusedLinkIndex < links.length) {
       const link = links[focusedLinkIndex];
-      cleanAndNavigate(link.url);
+      onNavigate(link.url);
     }
   });
 
