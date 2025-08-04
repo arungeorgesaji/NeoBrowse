@@ -1,6 +1,7 @@
 import { fetchHTML } from './network/fetcher.mjs';
 import { parseHTML } from './utils/htmlProcessing.mjs';
-import { renderTUI } from './renderers/tuiRenderer.mjs';
+import { renderTUI } from './renderers/tuiRenderer/tuiCore.mjs';
+import blessed from 'blessed';
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';

@@ -1,8 +1,14 @@
 Fix tables
-<a> - Hyperlink(Need to add more attributes)
 Fix search functionality
-Make switching between pages inside the tui itself
-Fix active tab cyan issue
-Add bookmarks 
-Add history
-Fix the warning system
+Fix error handling for searching with url
+Fix history
+Fix bookmarks
+Clean Code again
+Fix handling problematic pages 
+
+Fix relative pages
+Fix closing on brocken pages instead of showing message
+Fix brocken pagea being added to history
+
+Fix j and k in the new cleaned code 
+
