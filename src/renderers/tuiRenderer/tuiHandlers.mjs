@@ -1,3 +1,5 @@
+import { highlightFocusedLink, scrollToLink } from './tuiUtils.mjs';
+
 export function setupHandlers({
   screen,
   container,
@@ -7,8 +9,7 @@ export function setupHandlers({
   searchInput,
   links,
   updateTabItems,
-  highlightFocusedLink,
-  scrollToLink
+  content,
 }) {
   let focusedLinkIndex = -1;
 
@@ -115,16 +116,16 @@ export function setupHandlers({
     if (links.length === 0) return;
     
     focusedLinkIndex = (focusedLinkIndex + 1) % links.length;
-    highlightFocusedLink(focusedLinkIndex);
-    scrollToLink(focusedLinkIndex);
+    highlightFocusedLink(content, links, focusedLinkIndex, container, screen);
+    scrollToLink(links, focusedLinkIndex, container, screen);
   });
 
   screen.key(['j', 'left'], () => {
     if (links.length === 0) return;
     
     focusedLinkIndex = (focusedLinkIndex - 1 + links.length) % links.length;
-    highlightFocusedLink(focusedLinkIndex);
-    scrollToLink(focusedLinkIndex);
+    highlightFocusedLink(content, links, focusedLinkIndex, container, screen);
+    scrollToLink(links, focusedLinkIndex, container, screen);
   });
 
   screen.key(['enter'], () => {
