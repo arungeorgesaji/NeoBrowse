@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
+import blessed from 'blessed'; 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 

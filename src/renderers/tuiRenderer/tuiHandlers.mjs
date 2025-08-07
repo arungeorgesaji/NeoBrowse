@@ -63,7 +63,9 @@ export function setupHandlers({
       container.focus();
       if (value) {
         const searchQuery = encodeURIComponent(value);
-        onNavigate(`https://www.google.com/search?query=${searchQuery}`);
+        //onNavigate(`https://searx.be/search?q=${searchQuery}&format=html`);
+        onNavigate(`https://searx.be/search?q=${searchQuery}&format=html`);
+
       }
       screen.render();
     });

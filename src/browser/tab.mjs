@@ -9,10 +9,15 @@ export class Tab {
     this.currentUrl = '';
     this.currentDocument = null;
     this.active = false;
+    this.MAX_HISTORY = 100;
   }
 
   async navigate(url) {
     try {
+      if (!url || typeof url !== 'string') {
+        throw new Error('Invalid URL');
+      }
+
       if (url === 'back') {
         if (this.currentIndex > 0) {
           this.currentIndex--;
@@ -28,42 +33,25 @@ export class Tab {
           return null; 
         }
       } else if (url === 'reload') {
+        if (!this.currentUrl) {
+          throw new Error('No page to reload');
+        }
         url = this.currentUrl;
       } else {
-        this.history = this.history.slice(0, this.currentIndex + 1);
-
-        if (url.startsWith('/')) {
-          const baseUrl = new URL(this.currentUrl);
-          url = baseUrl.origin + url;
-          
-          new URL(url); 
-        } else if (url.startsWith('./')) {
-          const baseUrl = new URL(this.currentUrl);
-          const pathParts = baseUrl.pathname.split('/');
-          
-          pathParts.pop(); 
-          
-          url = baseUrl.origin + pathParts.join('/') + url.substring(1);
-        } else if (url.startsWith('../')) {
-          const baseUrl = new URL(this.currentUrl);
-          let pathParts = baseUrl.pathname.split('/');
-          
-          let levelsUp = 0;
-          while (url.startsWith('../')) {
-            levelsUp++;
-            url = url.substring(3); 
-            pathParts.pop();       
-          }
-          
-          if (pathParts.length < 1) pathParts = [""];
-          
-          url = baseUrl.origin + pathParts.join('/') + '/' + url;
-        } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          url = 'https://' + url;
+        url = this.resolveUrl(url);
+        
+        if (this.currentUrl && url.split('#')[0] === this.currentUrl.split('#')[0]) {
+          return null;
         }
 
+        this.history = this.history.slice(0, this.currentIndex + 1);
         this.history.push(url);
-        this.currentIndex = this.history.length - 1;
+        this.currentIndex++;
+        
+        if (this.history.length > this.MAX_HISTORY) {
+          this.history.shift();
+          this.currentIndex--; 
+        }
       }
 
       console.log(chalk.blue(`Fetching ${url}...`));
@@ -79,8 +67,38 @@ export class Tab {
         title: doc.title || url
       };
     } catch (err) {
-      console.error(chalk.red('Error:'), err.message);
+      console.error(chalk.red('Navigation error:'), err.message);
       throw err;
+    }
+  }
+
+  resolveUrl(url) {
+    try {
+      if (!this.currentUrl) {
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          return 'https://' + url;
+        }
+        return url;
+      }
+
+      if (url.startsWith('/')) {
+        const baseUrl = new URL(this.currentUrl);
+        return baseUrl.origin + url;
+      }
+      
+      if (url.startsWith('./') || url.startsWith('../')) {
+        const baseUrl = new URL(this.currentUrl);
+        return new URL(url, baseUrl).href;
+      }
+      
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return 'https://' + url;
+      }
+      
+      return url;
+    } catch (err) {
+      console.error(chalk.yellow('URL resolution error:'), err.message);
+      return url;
     }
   }
 }

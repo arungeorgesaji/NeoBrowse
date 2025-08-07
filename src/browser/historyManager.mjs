@@ -1,27 +1,36 @@
-export class historyManager {
-  constructor(tab) {
-    this.tab = tab;
-  }
+import blessed from 'blessed';
 
-  showHistory() {
+export class historyManager {
+  constructor(tab, browseInstance) {
+    this.tab = tab;
+    this.browse = browseInstance;
+    this.overlay = null;
+    this.historyList = null;
+    this.closeCallback = null;
+  }
+  
+  showHistory(closeCallback) {
     try {
-      const tab = this.activeTab;
-      if (!tab || tab.history.length === 0) {
-        this.showWarning("No history available");
+      this.closeCallback = closeCallback;
+      
+      if (!this.tab?.history || this.tab.history.length === 0) {
+        this.browse.showWarning("No history available");
+        if (this.closeCallback) this.closeCallback();
         return;
       }
-
-      const historyOverlay = blessed.box({
-        parent: this.currentScreen,
+      
+      this.overlay = blessed.box({
+        parent: this.browse.currentScreen,
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
-        bg: 'black'
+        bg: 'black',
+        tags: true
       });
-
-      const historyBox = blessed.box({
-        parent: historyOverlay,
+      
+      this.historyList = blessed.list({
+        parent: this.overlay,
         top: 'center',
         left: 'center',
         width: '80%',
@@ -29,40 +38,73 @@ export class historyManager {
         border: { type: 'line' },
         style: {
           border: { fg: 'cyan' },
-          bg: 'black'
+          item: { fg: 'white' },
+          selected: { bg: 'blue', fg: 'white' }
         },
-        scrollable: true,
+        items: this.tab.history.map((url, index) => 
+          `${index === this.tab.currentIndex ? '→ ' : '  '}${url}`
+        ),
         keys: true,
-        mouse: true
+        mouse: true,
+        vi: true,
+        scrollable: true,
+        alwaysScroll: true
       });
-
-      let historyContent = chalk.bold('Navigation History:\n\n');
-      tab.history.forEach((url, index) => {
-        const prefix = index === tab.currentIndex ? chalk.green('→ ') : '  ';
-        historyContent += `${prefix}${index + 1}. ${url}\n`;
+      
+      blessed.text({
+        parent: this.overlay,
+        bottom: 1,
+        left: 1,
+        content: 'Enter: Select • Esc: Close',
+        style: { fg: 'gray' }
       });
-
-      historyScreen.setContent(historyContent);
-      historyScreen.focus();
-
-      historyScreen.key(['escape', 'q'], () => {
-        historyOverlay.destroy();
-        this.currentScreen.render();
-      });
-
-      historyScreen.key(['enter'], () => {
-        const selectedIndex = blessed.getFocus(historyScreen).selected;
-        if (selectedIndex >= 0 && selectedIndex < tab.history.length) {
-          this.currentScreen.remove(historyScreen);
-          this.navigate(tab.history[selectedIndex]);
+      
+      const handleSelect = async (item, index) => {
+        try {
+          this.cleanup();
+          if (this.tab.history[index]) {
+            await this.browse.navigate(this.tab.history[index]);
+          }
+        } catch (err) {
+          console.error('Navigation error:', err);
+          this.browse.showWarning('Failed to navigate to selected URL');
         }
-      });
-
-      historyScreen.focus();
-      this.currentScreen.render();
+      };
+      
+      const handleClose = () => {
+        this.cleanup();
+      };
+      
+      this.historyList.on('select', handleSelect);
+      this.historyList.key(['escape', 'q', 'C-c'], handleClose);
+      this.overlay.key(['escape', 'q', 'C-c'], handleClose);
+      
+      this.historyList.focus();
+      this.browse.currentScreen.render();
+      
     } catch (err) {
       console.error('History screen error:', err);
-      this.showWarning('Failed to show history');
+      this.browse.showWarning('Failed to show history');
+      this.cleanup();
     }
+  }
+  
+  cleanup() {
+    if (this.historyList) {
+      this.historyList.removeAllListeners();
+      this.historyList = null;
+    }
+    
+    if (this.overlay) {
+      this.overlay.destroy();
+      this.overlay = null;
+    }
+    
+    if (this.closeCallback) {
+      this.closeCallback();
+      this.closeCallback = null;
+    }
+    
+    this.browse.currentScreen?.render();
   }
 }

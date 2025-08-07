@@ -1,0 +1,36 @@
+[2025-08-07T16:36:19.993Z] [INFO] 
+=== New Session Started 2025-08-07T16:36:19.992Z ===
+
+[2025-08-07T16:36:19.995Z] [INFO] Initialized historyManager for tab with 0 history entries
+[2025-08-07T16:36:21.279Z] [INFO] Showing history overlay
+[2025-08-07T16:36:21.280Z] [INFO] Creating overlay with 1 history items
+[2025-08-07T16:36:21.283Z] [ERROR] History error: {
+  "message": "blessed is not defined",
+  "stack": "ReferenceError: blessed is not defined\n    at historyManager.showHistory (file:///home/arun/Web2TUI/src/browser/historyManager.mjs:54:22)\n    at neoBrowse.showHistory (file:///home/arun/Web2TUI/src/browser/neoBrowse.mjs:240:25)\n    at Object.onShowHistory (file:///home/arun/Web2TUI/src/browser/neoBrowse.mjs:261:35)\n    at Screen.<anonymous> (file:///home/arun/Web2TUI/src/renderers/tuiRenderer/tuiHandlers.mjs:48:18)\n    at EventEmitter._emit (/home/arun/Web2TUI/node_modules/blessed/lib/events.js:94:20)\n    at EventEmitter.emit (/home/arun/Web2TUI/node_modules/blessed/lib/events.js:114:17)\n    at Program.<anonymous> (/home/arun/Web2TUI/node_modules/blessed/lib/widgets/screen.js:593:12)\n    at Program.emit (node:events:507:28)\n    at /home/arun/Web2TUI/node_modules/blessed/lib/program.js:410:15\n    at Array.forEach (<anonymous>)",
+  "state": {
+    "hasOverlay": false,
+    "historyCount": 1,
+    "currentIndex": 0,
+    "hasScreen": true
+  }
+}
+[2025-08-07T16:36:21.284Z] [INFO] Starting cleanup
+[2025-08-07T16:36:21.285Z] [WARN] No overlay to clean up
+[2025-08-07T16:36:53.526Z] [INFO] 
+=== New Session Started 2025-08-07T16:36:53.525Z ===
+
+[2025-08-07T16:36:53.527Z] [INFO] Initialized historyManager for tab with 0 history entries
+[2025-08-07T16:36:55.646Z] [INFO] Showing history overlay
+[2025-08-07T16:36:55.647Z] [INFO] Creating overlay with 1 history items
+[2025-08-07T16:36:55.650Z] [ERROR] History error: {
+  "message": "blessed is not defined",
+  "stack": "ReferenceError: blessed is not defined\n    at historyManager.showHistory (file:///home/arun/Web2TUI/src/browser/historyManager.mjs:54:22)\n    at neoBrowse.showHistory (file:///home/arun/Web2TUI/src/browser/neoBrowse.mjs:240:25)\n    at Object.onShowHistory (file:///home/arun/Web2TUI/src/browser/neoBrowse.mjs:261:35)\n    at Screen.<anonymous> (file:///home/arun/Web2TUI/src/renderers/tuiRenderer/tuiHandlers.mjs:48:18)\n    at EventEmitter._emit (/home/arun/Web2TUI/node_modules/blessed/lib/events.js:94:20)\n    at EventEmitter.emit (/home/arun/Web2TUI/node_modules/blessed/lib/events.js:114:17)\n    at Program.<anonymous> (/home/arun/Web2TUI/node_modules/blessed/lib/widgets/screen.js:593:12)\n    at Program.emit (node:events:507:28)\n    at /home/arun/Web2TUI/node_modules/blessed/lib/program.js:410:15\n    at Array.forEach (<anonymous>)",
+  "state": {
+    "hasOverlay": false,
+    "historyCount": 1,
+    "currentIndex": 0,
+    "hasScreen": true
+  }
+}
+[2025-08-07T16:36:55.651Z] [INFO] Starting cleanup
+[2025-08-07T16:36:55.652Z] [WARN] No overlay to clean up
