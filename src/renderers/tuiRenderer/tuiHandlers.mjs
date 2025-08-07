@@ -25,10 +25,6 @@ export function setupHandlers({
       urlInput.hide();
       container.focus();
       if (value && onNavigate) {
-        if (!value.startsWith('http://') && !value.startsWith('https://')) {
-          value = 'https://' + value;
-        }
-
         onNavigate(value);
       }
       screen.render();
@@ -67,7 +63,7 @@ export function setupHandlers({
       container.focus();
       if (value) {
         const searchQuery = encodeURIComponent(value);
-        onNavigate(`https://www.startpage.com/do/search?query=${searchQuery}`);
+        onNavigate(`https://www.google.com/search?query=${searchQuery}`);
       }
       screen.render();
     });

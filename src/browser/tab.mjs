@@ -37,8 +37,28 @@ export class Tab {
           url = baseUrl.origin + url;
           
           new URL(url); 
-        }
-        else if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        } else if (url.startsWith('./')) {
+          const baseUrl = new URL(this.currentUrl);
+          const pathParts = baseUrl.pathname.split('/');
+          
+          pathParts.pop(); 
+          
+          url = baseUrl.origin + pathParts.join('/') + url.substring(1);
+        } else if (url.startsWith('../')) {
+          const baseUrl = new URL(this.currentUrl);
+          let pathParts = baseUrl.pathname.split('/');
+          
+          let levelsUp = 0;
+          while (url.startsWith('../')) {
+            levelsUp++;
+            url = url.substring(3); 
+            pathParts.pop();       
+          }
+          
+          if (pathParts.length < 1) pathParts = [""];
+          
+          url = baseUrl.origin + pathParts.join('/') + '/' + url;
+        } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
           url = 'https://' + url;
         }
 
