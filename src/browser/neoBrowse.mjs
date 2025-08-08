@@ -13,7 +13,7 @@ export class neoBrowse {
     this.warningTimeout = null;
     this.originalFooterContent = null;
     this.bookmarkManager = new bookmarkManager();
-    this.historyManager = new historyManager(null, this);
+    this.historyManager = new historyManager(this);
     this.isModalOpen = false;
     this.initEventHandlers();
   }
@@ -230,7 +230,6 @@ export class neoBrowse {
   showHistory() {
     if (this.isModalOpen || !this.activeTab) return;
     
-    this.historyManager.tab = this.activeTab;
     this.isModalOpen = true;
     
     const cleanup = () => {

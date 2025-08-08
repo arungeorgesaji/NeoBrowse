@@ -1,8 +1,7 @@
 import blessed from 'blessed';
 
 export class historyManager {
-  constructor(tab, browseInstance) {
-    this.tab = tab;
+  constructor(browseInstance) {
     this.browse = browseInstance;
     this.overlay = null;
     this.historyList = null;
@@ -12,8 +11,9 @@ export class historyManager {
   showHistory(closeCallback) {
     try {
       this.closeCallback = closeCallback;
+      const tab = this.browse.activeTab;
       
-      if (!this.tab?.history || this.tab.history.length === 0) {
+      if (!tab?.history || tab.history.length === 0) {
         this.browse.showWarning("No history available");
         if (this.closeCallback) this.closeCallback();
         return;
@@ -41,30 +41,50 @@ export class historyManager {
           item: { fg: 'white' },
           selected: { bg: 'blue', fg: 'white' }
         },
-        items: this.tab.history.map((url, index) => 
-          `${index === this.tab.currentIndex ? '→ ' : '  '}${url}`
+        items: tab.history.map((url, index) => 
+          `${index === tab.currentIndex ? '→ ' : '  '}${index + 1}. ${url}`
         ),
         keys: true,
         mouse: true,
         vi: true,
         scrollable: true,
-        alwaysScroll: true
+        alwaysScroll: true,
+        scrollbar: {
+          ch: ' ',
+          style: {
+            bg: 'blue'
+          }
+        }
       });
       
       blessed.text({
         parent: this.overlay,
         bottom: 1,
         left: 1,
-        content: 'Enter: Select • Esc: Close',
+        content: 'Enter: Select • Esc: Close • Arrows: Navigate',
         style: { fg: 'gray' }
       });
       
       const handleSelect = async (item, index) => {
         try {
           this.cleanup();
-          if (this.tab.history[index]) {
-            await this.browse.navigate(this.tab.history[index]);
+          const tab = this.browse.activeTab;
+
+          if (index === tab.currentIndex) {
+            this.browse.showWarning("You're already on this page!");
+            return;
           }
+
+          await tab.navigate(tab.history[index], { 
+            historyIndex: index,
+            replaceHistory: true
+          });
+          
+          this.browse.refreshUI({
+            document: tab.currentDocument,
+            url: tab.currentUrl,
+            title: tab.currentDocument?.title || tab.currentUrl || 'New Tab'
+          });
         } catch (err) {
           console.error('Navigation error:', err);
           this.browse.showWarning('Failed to navigate to selected URL');
@@ -78,6 +98,10 @@ export class historyManager {
       this.historyList.on('select', handleSelect);
       this.historyList.key(['escape', 'q', 'C-c'], handleClose);
       this.overlay.key(['escape', 'q', 'C-c'], handleClose);
+      
+      if (tab.currentIndex >= 0) {
+        this.historyList.scrollTo(tab.currentIndex);
+      }
       
       this.historyList.focus();
       this.browse.currentScreen.render();

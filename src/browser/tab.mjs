@@ -12,13 +12,21 @@ export class Tab {
     this.MAX_HISTORY = 100;
   }
 
-  async navigate(url) {
+  async navigate(url, options = {}) {
     try {
       if (!url || typeof url !== 'string') {
         throw new Error('Invalid URL');
       }
 
-      if (url === 'back') {
+      if (options.historyIndex !== undefined) {
+        if (options.historyIndex >= 0 && options.historyIndex < this.history.length) {
+          this.currentIndex = options.historyIndex;
+          url = this.history[this.currentIndex];
+        } else {
+          throw new Error('Invalid history index');
+        }
+      }
+      else if (url === 'back') {
         if (this.currentIndex > 0) {
           this.currentIndex--;
           url = this.history[this.currentIndex];
@@ -32,25 +40,32 @@ export class Tab {
         } else {
           return null; 
         }
-      } else if (url === 'reload') {
+      } 
+      else if (url === 'reload') {
         if (!this.currentUrl) {
           throw new Error('No page to reload');
         }
         url = this.currentUrl;
-      } else {
+      } 
+      else {
         url = this.resolveUrl(url);
         
         if (this.currentUrl && url.split('#')[0] === this.currentUrl.split('#')[0]) {
           return null;
         }
 
-        this.history = this.history.slice(0, this.currentIndex + 1);
-        this.history.push(url);
-        this.currentIndex++;
-        
-        if (this.history.length > this.MAX_HISTORY) {
-          this.history.shift();
-          this.currentIndex--; 
+        if (!options.preserveHistory && this.currentIndex < this.history.length - 1) {
+          this.history = this.history.slice(0, this.currentIndex + 1);
+        }
+
+        if (!options.replaceHistory) {
+          this.history.push(url);
+          this.currentIndex = this.history.length - 1;
+          
+          if (this.history.length > this.MAX_HISTORY) {
+            this.history.shift();
+            this.currentIndex--;
+          }
         }
       }
 
@@ -64,7 +79,9 @@ export class Tab {
       return {
         document: doc,
         url: url,
-        title: doc.title || url
+        title: doc.title || url,
+        historyIndex: this.currentIndex,
+        historyLength: this.history.length
       };
     } catch (err) {
       console.error(chalk.red('Navigation error:'), err.message);
@@ -100,5 +117,14 @@ export class Tab {
       console.error(chalk.yellow('URL resolution error:'), err.message);
       return url;
     }
+  }
+
+  getHistoryState() {
+    return {
+      canGoBack: this.currentIndex > 0,
+      canGoForward: this.currentIndex < this.history.length - 1,
+      currentIndex: this.currentIndex,
+      history: [...this.history]
+    };
   }
 }
