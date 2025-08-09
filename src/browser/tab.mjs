@@ -25,8 +25,7 @@ export class Tab {
         } else {
           throw new Error('Invalid history index');
         }
-      }
-      else if (url === 'back') {
+      } else if (url === 'back') {
         if (this.currentIndex > 0) {
           this.currentIndex--;
           url = this.history[this.currentIndex];
@@ -40,15 +39,26 @@ export class Tab {
         } else {
           return null; 
         }
-      } 
-      else if (url === 'reload') {
+      } else if (url === 'reload') {
         if (!this.currentUrl) {
           throw new Error('No page to reload');
         }
         url = this.currentUrl;
-      } 
-      else {
+      } else {
         url = this.resolveUrl(url);
+        
+        const isSamePageFragment = this.currentUrl && url.split('#')[0] === this.currentUrl.split('#')[0] && url.includes('#');
+        
+        if (isSamePageFragment) {
+          return {
+            document: this.currentDocument,
+            url: url,
+            title: this.currentDocument?.title || url,
+            fragment: url.split('#')[1],
+            historyIndex: this.currentIndex,
+            historyLength: this.history.length
+          };
+        }
         
         if (this.currentUrl && url.split('#')[0] === this.currentUrl.split('#')[0]) {
           return null;
@@ -80,6 +90,7 @@ export class Tab {
         document: doc,
         url: url,
         title: doc.title || url,
+        fragment: url.includes('#') ? url.split('#')[1] : null,
         historyIndex: this.currentIndex,
         historyLength: this.history.length
       };

@@ -160,48 +160,82 @@ export class neoBrowse {
 
     try {
       const bookmarks = this.bookmarkManager.bookmarks;
-      if (bookmarks.length === 0) {
-        this.showWarning('No bookmarks saved yet');
-        this.isModalOpen = false;
-        return;
-      }
+      const currentUrl = this.activeTab?.currentUrl;
+      const hasCurrentUrl = currentUrl && !bookmarks.some(b => b.url === currentUrl);
 
-      const screen = blessed.screen({
-        smartCSR: true,
-        dockBorders: true,
-        fullUnicode: true
+      const overlay = blessed.box({
+        parent: this.currentScreen,
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        bg: 'black'
       });
 
       const list = blessed.list({
-        items: bookmarks.map(b => `${chalk.bold(b.title)}\n${chalk.dim(b.url)}`),
-        keys: true,
-        vi: true,
+        parent: overlay,
+        top: 'center',
+        left: 'center',
+        width: '80%',
+        height: '80%',
         border: { type: 'line' },
         style: {
           border: { fg: 'cyan' },
+          bg: 'black',
           selected: { bg: 'blue', fg: 'white' }
         },
-        width: '80%',
-        height: '80%',
-        top: 'center',
-        left: 'center'
+        keys: true,
+        mouse: true,
+        items: []
       });
 
-      list.on('select', async (_, index) => {
-        screen.destroy();
+      bookmarks.forEach(b => {
+        list.addItem(`${chalk.bold(b.title)}\n${chalk.dim(b.url)}`);
+      });
+
+      if (hasCurrentUrl) {
+        list.addItem(chalk.green('+ Add current page to bookmarks'));
+      }
+
+      if (bookmarks.length === 0 && !hasCurrentUrl) {
+        list.addItem(chalk.yellow('No bookmarks yet'));
+        list.addItem(chalk.dim('Visit a page first to bookmark it'));
+      }
+
+      list.key(['escape', 'q'], () => {
+        overlay.destroy();
         this.isModalOpen = false;
-        await this.navigate(bookmarks[index].url);
+        this.currentScreen.render();
       });
 
-      screen.key(['escape', 'q', 'C-c'], () => {
-        screen.destroy();
-        this.isModalOpen = false;
-        this.currentScreen?.render();
+      list.key(['enter'], async () => {
+        const selected = list.selected;
+        if (selected >= 0 && selected < bookmarks.length) {
+          const bookmark = bookmarks[selected];
+          overlay.destroy();
+          this.isModalOpen = false;
+          await this.navigate(bookmark.url);
+        } else if (hasCurrentUrl && selected === bookmarks.length) {
+          await this.addCurrentToBookmarks();
+          overlay.destroy();
+          this.isModalOpen = false;
+          await this.showBookmarks(); // refresh
+        }
       });
 
-      screen.append(list);
+      list.key(['d'], async () => {
+        const selected = list.selected;
+        if (selected >= 0 && selected < bookmarks.length) {
+          const bookmark = bookmarks[selected];
+          this.bookmarkManager.removeBookmark(bookmark.url);
+          overlay.destroy();
+          this.isModalOpen = false;
+          await this.showBookmarks(); // refresh
+        }
+      });
+
       list.focus();
-      screen.render();
+      this.currentScreen.render();
     } catch (err) {
       console.error(chalk.red('Bookmarks error:'), err);
       this.isModalOpen = false;
