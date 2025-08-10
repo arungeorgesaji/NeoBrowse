@@ -1,14 +1,5 @@
+Make url visible on hover in bookmarks
+Implement url switcher to brave
+Implement settings page
 Fix tables
-Fix search functionality
-Fix error handling for searching with url
-Fix history
-Fix bookmarks
-Clean Code again
-Fix handling problematic pages 
-
-Fix relative pages
-Fix closing on brocken pages instead of showing message
-Fix brocken pagea being added to history
-
-Fix j and k in the new cleaned code 
-
+Fix URLFragments
