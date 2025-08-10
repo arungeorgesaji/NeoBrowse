@@ -12,7 +12,7 @@ export class neoBrowse {
     this.currentScreen = null;
     this.warningTimeout = null;
     this.originalFooterContent = null;
-    this.bookmarkManager = new bookmarkManager();
+    this.bookmarkManager = new bookmarkManager(this);
     this.historyManager = new historyManager(this);
     this.isModalOpen = false;
     this.initEventHandlers();
@@ -39,6 +39,7 @@ export class neoBrowse {
 
     if (this.warningTimeout) {
       clearTimeout(this.warningTimeout);
+      this.warningTimeout = null;
     }
 
     const footer = this.currentScreen.children.find(
@@ -46,7 +47,7 @@ export class neoBrowse {
     );
 
     if (footer) {
-      if (!this.originalFooterContent) {
+      if (!this.originalFooterContent && footer.content !== message) {
         this.originalFooterContent = footer.content;
       }
 
@@ -54,7 +55,7 @@ export class neoBrowse {
       this.currentScreen.render();
 
       this.warningTimeout = setTimeout(() => {
-        if (this.originalFooterContent) {
+        if (footer && this.originalFooterContent) {
           footer.setContent(this.originalFooterContent);
           this.currentScreen.render();
         }
@@ -154,94 +155,6 @@ export class neoBrowse {
     return false;
   }
 
-  async showBookmarks() {
-    if (this.isModalOpen) return;
-    this.isModalOpen = true;
-
-    try {
-      const bookmarks = this.bookmarkManager.bookmarks;
-      const currentUrl = this.activeTab?.currentUrl;
-      const hasCurrentUrl = currentUrl && !bookmarks.some(b => b.url === currentUrl);
-
-      const overlay = blessed.box({
-        parent: this.currentScreen,
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        bg: 'black'
-      });
-
-      const list = blessed.list({
-        parent: overlay,
-        top: 'center',
-        left: 'center',
-        width: '80%',
-        height: '80%',
-        border: { type: 'line' },
-        style: {
-          border: { fg: 'cyan' },
-          bg: 'black',
-          selected: { bg: 'blue', fg: 'white' }
-        },
-        keys: true,
-        mouse: true,
-        items: []
-      });
-
-      bookmarks.forEach(b => {
-        list.addItem(`${chalk.bold(b.title)}\n${chalk.dim(b.url)}`);
-      });
-
-      if (hasCurrentUrl) {
-        list.addItem(chalk.green('+ Add current page to bookmarks'));
-      }
-
-      if (bookmarks.length === 0 && !hasCurrentUrl) {
-        list.addItem(chalk.yellow('No bookmarks yet'));
-        list.addItem(chalk.dim('Visit a page first to bookmark it'));
-      }
-
-      list.key(['escape', 'q'], () => {
-        overlay.destroy();
-        this.isModalOpen = false;
-        this.currentScreen.render();
-      });
-
-      list.key(['enter'], async () => {
-        const selected = list.selected;
-        if (selected >= 0 && selected < bookmarks.length) {
-          const bookmark = bookmarks[selected];
-          overlay.destroy();
-          this.isModalOpen = false;
-          await this.navigate(bookmark.url);
-        } else if (hasCurrentUrl && selected === bookmarks.length) {
-          await this.addCurrentToBookmarks();
-          overlay.destroy();
-          this.isModalOpen = false;
-          await this.showBookmarks(); // refresh
-        }
-      });
-
-      list.key(['d'], async () => {
-        const selected = list.selected;
-        if (selected >= 0 && selected < bookmarks.length) {
-          const bookmark = bookmarks[selected];
-          this.bookmarkManager.removeBookmark(bookmark.url);
-          overlay.destroy();
-          this.isModalOpen = false;
-          await this.showBookmarks(); // refresh
-        }
-      });
-
-      list.focus();
-      this.currentScreen.render();
-    } catch (err) {
-      console.error(chalk.red('Bookmarks error:'), err);
-      this.isModalOpen = false;
-      this.showWarning('Failed to load bookmarks');
-    }
-  }
 
   async addCurrentToBookmarks() {
     if (!this.activeTab) {
@@ -254,7 +167,6 @@ export class neoBrowse {
 
     try {
       this.bookmarkManager.addBookmark(url, title);
-      this.showWarning(`Bookmark added: ${title}`);
     } catch (err) {
       console.error(chalk.red('Bookmark error:'), err);
       this.showWarning('Failed to add bookmark');
@@ -293,7 +205,7 @@ export class neoBrowse {
         onCloseTab: () => this.closeCurrentTab(),
         onSwitchTab: (index) => this.switchTab(index),
         onShowHistory: () => this.showHistory(),
-        onShowBookmarks: () => this.showBookmarks(),
+        onShowBookmarks: () => this.bookmarkManager.showBookmarks(),
       }
     );
   }

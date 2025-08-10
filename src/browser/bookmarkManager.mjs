@@ -9,7 +9,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export class bookmarkManager {
-  constructor() {
+  constructor(browserInstance) {
+    this.browser = browserInstance;
     this.bookmarks = [];
     this.loadBookmarks();
   }
@@ -39,15 +40,19 @@ export class bookmarkManager {
     if (!title) title = this.activeTab?.currentDocument?.title || url;
     
     if (!url) {
-      this.showWarning('No URL to bookmark');
+      if (!this.browser.isModalOpen) {
+        this.showWarning('No URL to bookmark');
+      }
       return;
     }
 
     if (!this.bookmarks.some(b => b.url === url)) {
       this.bookmarks.push({ url, title });
       this.saveBookmarks();
-      this.showWarning(`Bookmark added: ${title}`);
-    } else {
+      if (!this.browser.isModalOpen) {
+        this.showWarning(`Bookmark added: ${title}`);
+      }
+    } else if (!this.browser.isModalOpen) {
       this.showWarning('Already bookmarked');
     }
   }
@@ -58,14 +63,20 @@ export class bookmarkManager {
       const { title } = this.bookmarks[index];
       this.bookmarks.splice(index, 1);
       this.saveBookmarks();
-      this.showWarning(`Bookmark removed: ${title}`);
     }
   }
 
   async showBookmarks() {
+    if (this.browser.isModalOpen) return;
+    this.browser.isModalOpen = true;
+
     try {
-      const bookmarksOverlay = blessed.box({
-        parent: this.currentScreen,
+      const bookmarks = this.bookmarks;
+      const currentUrl = this.browser.activeTab?.currentUrl;
+      const hasCurrentUrl = currentUrl && !bookmarks.some(b => b.url === currentUrl);
+
+      const overlay = blessed.box({
+        parent: this.browser.currentScreen,
         top: 0,
         left: 0,
         width: '100%',
@@ -73,8 +84,8 @@ export class bookmarkManager {
         bg: 'black'
       });
 
-      const bookmarksBox = blessed.list({
-        parent: bookmarksOverlay,
+      const list = blessed.list({
+        parent: overlay,
         top: 'center',
         left: 'center',
         width: '80%',
@@ -83,66 +94,80 @@ export class bookmarkManager {
         style: {
           border: { fg: 'cyan' },
           bg: 'black',
-          selected: {
-            bg: 'blue',
-            fg: 'white'
-          }
+          selected: { bg: 'blue', fg: 'white' }
         },
-        items: [],
         keys: true,
-        mouse: true
+        mouse: true,
+        items: []
       });
 
-      const currentUrl = this.activeTab?.currentUrl;
-      const hasCurrentUrl = currentUrl && !this.bookmarks.some(b => b.url === currentUrl);
-      
-      this.bookmarks.forEach(b => {
-        bookmarksBox.addItem(`${b.title}\n${chalk.dim(b.url)}`);
+      bookmarks.forEach((b, index) => {
+        const displayTitle = b.title || b.url;
+        
+        list.addItem(`${chalk.bold(`${index + 1}. ${displayTitle}`)}`);
       });
 
-      if (hasCurrentUrl) {
-        bookmarksBox.addItem(chalk.green('+ Add current page to bookmarks'));
+      if (currentUrl) {
+        const isBookmarked = bookmarks.some(b => b.url === currentUrl);
+        if (isBookmarked) {
+          list.addItem(chalk.yellow('✓ Current page is bookmarked'));
+        } else {
+          list.addItem(chalk.green('+ Add current page to bookmarks'));
+        }
       }
 
-      if (this.bookmarks.length === 0 && !hasCurrentUrl) {
-        bookmarksBox.addItem(chalk.yellow('No bookmarks yet'));
-        bookmarksBox.addItem(chalk.dim('Visit a page first to bookmark it'));
+      if (bookmarks.length === 0 && !hasCurrentUrl) {
+        list.addItem(chalk.yellow('No bookmarks yet'));
+        list.addItem(chalk.dim('Visit a page first to bookmark it'));
       }
 
-      bookmarksBox.key(['escape', 'q'], () => {
-        bookmarksOverlay.destroy();
-        this.currentScreen.render();
+      blessed.text({
+        parent: overlay,
+        bottom: 1,
+        left: 1,
+        content: 'Enter: Open • D: Delete • Esc: Close • Arrows: Navigate',
+        style: { fg: 'gray' }
       });
 
-      bookmarksBox.key(['enter'], async () => {
-        const selected = bookmarksBox.selected;
-        if (selected >= 0 && selected < this.bookmarks.length) {
-          const bookmark = this.bookmarks[selected];
-          bookmarksOverlay.destroy();
-          await this.navigate(bookmark.url);
-        } else if (hasCurrentUrl && selected === this.bookmarks.length) {
-          await this.addBookmark();
-          bookmarksOverlay.destroy();
+      list.key(['escape', 'q'], () => {
+        overlay.destroy();
+        this.browser.isModalOpen = false;
+        this.browser.currentScreen.render();
+      });
+
+      list.key(['enter'], async () => {
+        const selected = list.selected;
+        if (selected >= 0 && selected < bookmarks.length) {
+          const bookmark = bookmarks[selected];
+          overlay.destroy();
+          this.browser.isModalOpen = false;
+          await this.browser.navigate(bookmark.url);
+        } else if (hasCurrentUrl && selected === bookmarks.length) {
+          await this.browser.addCurrentToBookmarks();
+          overlay.destroy();
+          this.browser.isModalOpen = false;
           await this.showBookmarks();
         }
       });
 
-      bookmarksBox.key(['d'], async () => {
-        const selected = bookmarksBox.selected;
-        if (selected >= 0 && selected < this.bookmarks.length) {
-          const bookmark = this.bookmarks[selected];
-          await this.removeBookmark(bookmark.url);
-          this.bookmarks.splice(selected, 1);
-          bookmarksOverlay.destroy();
-          await this.showBookmarks();
+      list.key(['d'], async () => {
+        const selected = list.selected;
+        if (selected >= 0 && selected < bookmarks.length) {
+            const bookmark = bookmarks[selected];
+            this.removeBookmark(bookmark.url);
+            
+            overlay.destroy();
+            this.browser.isModalOpen = false;
+            await this.showBookmarks(); 
         }
       });
 
-      bookmarksBox.focus();
-      this.currentScreen.render();
+      list.focus();
+      this.browser.currentScreen.render();
     } catch (err) {
-      console.error('Bookmarks screen error:', err);
-      this.showWarning('Failed to show bookmarks');
+      console.error(chalk.red('Bookmarks error:'), err);
+      this.browser.isModalOpen = false;
+      this.browser.showWarning('Failed to load bookmarks');
     }
   }
 }
