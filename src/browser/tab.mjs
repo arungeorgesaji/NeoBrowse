@@ -1,6 +1,7 @@
 import { fetchHTML } from '../network/fetcher.mjs';
 import { parseHTML } from '../utils/htmlProcessing.mjs';
 import chalk from 'chalk';
+import dns from 'dns/promises'
 
 export class Tab {
   constructor() {
@@ -10,6 +11,28 @@ export class Tab {
     this.currentDocument = null;
     this.active = false;
     this.MAX_HISTORY = 100;
+  }
+
+  async isUrl(input) {
+    if (!input || typeof input !== 'string') return false;
+    const trimmed = input.trim();
+
+    if (/\s/.test(trimmed)) return false;
+
+    let host;
+    try {
+      const url = new URL(trimmed.includes('://') ? trimmed : 'https://' + trimmed);
+      host = url.hostname;
+    } catch {
+      return false;
+    }
+
+    try {
+      await dns.lookup(host);
+      return true; 
+    } catch {
+      return false;
+    }
   }
 
   async navigate(url, options = {}) {
@@ -45,6 +68,11 @@ export class Tab {
         }
         url = this.currentUrl;
       } else {
+        if (!(await this.isUrl(url))) {
+          const searchQuery = encodeURIComponent(url);
+          url = `https://searx.be/search?q=${searchQuery}&format=html`;
+        }
+
         url = this.resolveUrl(url);
         
         const isSamePageFragment = this.currentUrl && url.split('#')[0] === this.currentUrl.split('#')[0] && url.includes('#');

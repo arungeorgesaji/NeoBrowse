@@ -83,7 +83,6 @@ export class neoBrowse {
         return false;
       }
     } catch (err) {
-      console.error(chalk.red('Navigation error:'), err.message);
       this.showWarning('Navigation error');
       return false;
     }
