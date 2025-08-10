@@ -16,9 +16,8 @@ export function setupHandlers({
   const bindKey = (keys, handler) => {
     const keyArray = Array.isArray(keys) ? keys : [keys];
     const blessedKeys = keyArray.flatMap(key => {
-      if (/^[a-z]$/.test(key)) {
-          return [key, `S-${key}`]; 
-      }
+      if (/^[a-z]$/.test(key)) return [key, `S-${key}`];
+      if (/^M-[a-z]$/.test(key)) return [key, `M-S-${key.slice(2)}`];
       return [key]; 
     });
     screen.key(blessedKeys, handler);
