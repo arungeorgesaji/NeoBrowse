@@ -3,7 +3,7 @@ import chalk from 'chalk';
 
 async function main() {
   const args = process.argv.slice(2);
-  const initialUrl = args[0] || 'https://arungeorgesaji.is-a.dev';
+  const initialUrl = args[0] || 'https://arungeorgesaji.is-a.dev/NeoBrowse/';
 
   const browser = new neoBrowse();
   

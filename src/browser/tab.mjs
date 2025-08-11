@@ -7,7 +7,7 @@ export class Tab {
   constructor() {
     this.history = []; 
     this.currentIndex = -1; 
-    this.currentUrl = '';
+    this.currentUrl = 'https://arungeorgesaji.is-a.dev/NeoBrowse/';
     this.currentDocument = null;
     this.active = false;
     this.MAX_HISTORY = 100;
