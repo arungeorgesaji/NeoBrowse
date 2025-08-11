@@ -80,6 +80,12 @@ export function setupHandlers({
     });
   });
 
+  bindKey('M-s', () => {
+    if (tabOptions.onShowSettings) {
+      tabOptions.onShowSettings();
+    }
+  });
+
   bindKey('t', () => {
     if (tabOptions.onNewTab) {
       tabOptions.onNewTab();

@@ -1,6 +1,7 @@
 import { Tab } from './tab.mjs';
 import { historyManager } from './historyManager.mjs';
 import { bookmarkManager } from './bookmarkManager.mjs';
+import { settingsManager } from './settingsManager.mjs';
 import { renderTUI } from '../renderers/tuiRenderer/tuiCore.mjs';
 import chalk from 'chalk';
 import blessed from 'blessed';
@@ -14,6 +15,7 @@ export class neoBrowse {
     this.originalFooterContent = null;
     this.bookmarkManager = new bookmarkManager(this);
     this.historyManager = new historyManager(this);
+    this.settingsManager = new settingsManager(this);
     this.isModalOpen = false;
     this.initEventHandlers();
   }
@@ -205,6 +207,7 @@ export class neoBrowse {
         onSwitchTab: (index) => this.switchTab(index),
         onShowHistory: () => this.showHistory(),
         onShowBookmarks: () => this.bookmarkManager.showBookmarks(),
+        onShowSettings: () => this.settingsManager.showSettings(),
       }
     );
   }
