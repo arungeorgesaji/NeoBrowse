@@ -101,9 +101,25 @@ export class bookmarkManager {
         items: []
       });
 
+      const urlDisplay = blessed.box({
+        parent: overlay,
+        bottom: 4,
+        left: 'center',
+        width: '80%',
+        height: 3,
+        border: { type: 'line' },
+        style: {
+          border: { fg: 'yellow' },
+          bg: 'black',
+          fg: 'cyan'
+        },
+        content: 'Select a bookmark to see its URL',
+        align: 'center',
+        valign: 'middle'
+      });
+
       bookmarks.forEach((b, index) => {
         const displayTitle = b.title || b.url;
-        
         list.addItem(`${chalk.bold(`${index + 1}. ${displayTitle}`)}`);
       });
 
@@ -119,6 +135,31 @@ export class bookmarkManager {
       if (bookmarks.length === 0 && !hasCurrentUrl) {
         list.addItem(chalk.yellow('No bookmarks yet'));
         list.addItem(chalk.dim('Visit a page first to bookmark it'));
+      }
+
+      const updateUrlDisplay = () => {
+        const selected = list.selected;
+        if (selected >= 0 && selected < bookmarks.length) {
+          const bookmark = bookmarks[selected];
+          const truncateUrl = bookmark.url.length > 100 ? 
+            bookmark.url.substring(0, 97) + '...' : bookmark.url;
+          urlDisplay.setContent(chalk.cyan(truncateUrl));
+        } else if (hasCurrentUrl && selected === bookmarks.length) {
+          const truncateUrl = currentUrl.length > 100 ? 
+            currentUrl.substring(0, 97) + '...' : currentUrl;
+          urlDisplay.setContent(chalk.green(truncateUrl));
+        } else {
+          urlDisplay.setContent('Select a bookmark to see its URL');
+        }
+        this.browser.currentScreen.render();
+      };
+
+      list.on('select item', updateUrlDisplay);
+      list.on('focus', updateUrlDisplay);
+      list.on('move', updateUrlDisplay);
+      
+      if (bookmarks.length > 0) {
+        setTimeout(updateUrlDisplay, 50);
       }
 
       blessed.text({
