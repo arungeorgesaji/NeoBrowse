@@ -90,7 +90,7 @@ export class neoBrowse {
     }
   }
 
-  async newTab(url = 'https://arungeorgesaji.is-a.dev') {
+  async newTab(url = '') {
     const newTab = new Tab();
     this.tabs.push(newTab);
     this.tabs.forEach(tab => tab.active = false);

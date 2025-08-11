@@ -68,30 +68,13 @@ export class Tab {
         }
         url = this.currentUrl;
       } else {
+        url = this.resolveUrl(url);
+
         if (!(await this.isUrl(url))) {
           const searchQuery = encodeURIComponent(url);
           url = `https://searx.be/search?q=${searchQuery}&format=html`;
         }
-
-        url = this.resolveUrl(url);
         
-        const isSamePageFragment = this.currentUrl && url.split('#')[0] === this.currentUrl.split('#')[0] && url.includes('#');
-        
-        if (isSamePageFragment) {
-          return {
-            document: this.currentDocument,
-            url: url,
-            title: this.currentDocument?.title || url,
-            fragment: url.split('#')[1],
-            historyIndex: this.currentIndex,
-            historyLength: this.history.length
-          };
-        }
-        
-        if (this.currentUrl && url.split('#')[0] === this.currentUrl.split('#')[0]) {
-          return null;
-        }
-
         if (!options.preserveHistory && this.currentIndex < this.history.length - 1) {
           this.history = this.history.slice(0, this.currentIndex + 1);
         }

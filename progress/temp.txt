@@ -1,5 +1,4 @@
-Make url visible on hover in bookmarks
-Implement url switcher to brave
-Implement settings page
+Fix Settings
 Fix tables
 Fix URLFragments
+Handle strong linebreaks
