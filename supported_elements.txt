@@ -1,3 +1,5 @@
+This file lists both elements which are supported right now and those which are not supported yet but are planned for future support.
+
 <h1>-<h6> - Headings 
 <p> - Paragraph
 <ul> - Unordered list

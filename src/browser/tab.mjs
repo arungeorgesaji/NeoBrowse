@@ -2,6 +2,8 @@ import { fetchHTML } from '../network/fetcher.mjs';
 import { parseHTML } from '../utils/htmlProcessing.mjs';
 import chalk from 'chalk';
 import dns from 'dns/promises'
+import fs from 'fs';
+import path from 'path';
 
 export class Tab {
   constructor() {
@@ -39,6 +41,24 @@ export class Tab {
     try {
       if (!url || typeof url !== 'string') {
         throw new Error('Invalid URL');
+      }
+
+      if (url === 'https://arungeorgesaji.is-a.dev/NeoBrowse/') {
+        console.log(chalk.blue('Navigating to homepage...'));
+        const homepagePath = path.join(process.cwd(), 'index.html');
+        const htmlContent = fs.readFileSync(homepagePath, 'utf8');
+        const doc = parseHTML(htmlContent);
+        
+        this.currentDocument = doc;
+
+        return {
+          document: doc,
+          url: this.currentUrl,
+          title: doc.title || 'NeoBrowse Home',
+          fragment: null,
+          historyIndex: this.currentIndex,
+          historyLength: this.history.length
+        };
       }
 
       if (options.historyIndex !== undefined) {

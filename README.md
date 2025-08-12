@@ -16,6 +16,7 @@ A lightweight, web browser for the terminal, built with Node.js and Blessed.
 Run NeoBrowse instantly using Docker - no installation needed:
 
 ```bash
+docker pull arunchess/neobrowse:latest && \
 docker run -it --rm \
   -v "$HOME/my_bookmarks:/app/data" \
   -e "HOME=/app/data" \
