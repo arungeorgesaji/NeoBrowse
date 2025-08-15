@@ -1,5 +1,21 @@
 import { highlightFocusedLink, scrollToLink } from './tuiUtils.mjs';
 
+export function bindKey(element, keys, handler) {
+  if (!element || typeof element.key !== 'function') {
+    console.warn('bindKey: element must have a .key() method');
+    return;
+  }
+  
+  const keyArray = Array.isArray(keys) ? keys : [keys];
+  const blessedKeys = keyArray.flatMap(key => {
+    if (/^[a-z]$/.test(key)) return [key, `S-${key}`];
+    if (/^M-[a-z]$/.test(key)) return [key, `M-S-${key.slice(2)}`];
+    return [key]; 
+  });
+  
+  element.key(blessedKeys, handler);
+}
+
 export function setupHandlers({
   screen,
   container,
@@ -13,22 +29,12 @@ export function setupHandlers({
 }) {
   let focusedLinkIndex = -1;
 
-  const bindKey = (keys, handler) => {
-    const keyArray = Array.isArray(keys) ? keys : [keys];
-    const blessedKeys = keyArray.flatMap(key => {
-      if (/^[a-z]$/.test(key)) return [key, `S-${key}`];
-      if (/^M-[a-z]$/.test(key)) return [key, `M-S-${key.slice(2)}`];
-      return [key]; 
-    });
-    screen.key(blessedKeys, handler);
-  };
-
-  bindKey(['q', 'C-c'], () => {
+  bindKey(screen, ['q', 'C-c'], () => {
     screen.destroy();
     process.exit(0);
   });
   
-  bindKey('n', () => {
+  bindKey(screen, ['n'], () => {
     urlInput.show();
     urlInput.focus();
     urlInput.readInput((err, value) => {
@@ -41,31 +47,31 @@ export function setupHandlers({
     });
   });
 
-  bindKey('b', () => {
+  bindKey(screen, ['b'], () => {
     onNavigate('back');
   });
 
-  bindKey('f', () => {
+  bindKey(screen, ['f'], () => {
     onNavigate('forward');
   });;
 
-  bindKey('r', () => {
+  bindKey(screen, ['r'], () => {
     onNavigate('reload');
   });
 
-  bindKey('h', () => {
+  bindKey(screen, ['h'], () => {
     if (tabOptions.onShowHistory) {
       tabOptions.onShowHistory();
     }
   });
 
-  bindKey('m', () => {
+  bindKey(screen, ['m'], () => {
     if (tabOptions.onShowBookmarks) {
       tabOptions.onShowBookmarks();
     }
   });
 
-  bindKey('s', () => {
+  bindKey(screen, ['s'], () => {
     searchInput.show();
     searchInput.focus();
     searchInput.readInput((err, value) => {
@@ -80,13 +86,13 @@ export function setupHandlers({
     });
   });
 
-  bindKey('M-s', () => {
+  bindKey(screen, ['M-s'], () => {
     if (tabOptions.onShowSettings) {
       tabOptions.onShowSettings();
     }
   });
 
-  bindKey('t', () => {
+  bindKey(screen, ['t'], () => {
     if (tabOptions.onNewTab) {
       tabOptions.onNewTab();
       updateTabItems();
@@ -94,7 +100,7 @@ export function setupHandlers({
     }
   });
 
-  bindKey(['w'], () => {
+  bindKey(screen, ['w'], () => {
     if (tabOptions.onCloseTab) {
       tabOptions.onCloseTab();
       updateTabItems();
@@ -102,7 +108,7 @@ export function setupHandlers({
     }
   });
 
-  bindKey(['tab'], () => {
+  bindKey(screen, ['tab'], () => {
     if (tabOptions.onSwitchTab) {
       const tabs = tabOptions.tabs || [];
       if (tabs.length > 1) {
@@ -116,7 +122,7 @@ export function setupHandlers({
   });
 
   for (let i = 0; i < 9; i++) {
-    bindKey([`${i + 1}`], () => {  
+    bindKey(screen, [`${i + 1}`], () => {  
       if (tabOptions.onSwitchTab && i < tabOptions.tabs.length) {
         tabOptions.onSwitchTab(i);
         updateTabItems();
@@ -125,7 +131,7 @@ export function setupHandlers({
     });
   }
 
-  bindKey(['k', 'right'], () => {
+  bindKey(screen, ['k', 'right'], () => {
     if (links.length === 0) return;
     
     focusedLinkIndex = (focusedLinkIndex + 1) % links.length;
@@ -133,7 +139,7 @@ export function setupHandlers({
     scrollToLink(links, focusedLinkIndex, container, screen);
   });
 
-  bindKey(['j', 'left'], () => {
+  bindKey(screen, ['j', 'left'], () => {
     if (links.length === 0) return;
     
     focusedLinkIndex = (focusedLinkIndex - 1 + links.length) % links.length;
@@ -141,50 +147,50 @@ export function setupHandlers({
     scrollToLink(links, focusedLinkIndex, container, screen);
   });
 
-  bindKey(['enter'], () => {
+  bindKey(screen, ['enter'], () => {
     if (focusedLinkIndex >= 0 && focusedLinkIndex < links.length) {
       const link = links[focusedLinkIndex];
       onNavigate(link.url);
     }
   });
 
-  bindKey(['up', 'down'], (ch, key) => {
+  bindKey(screen ,['up', 'down'], (ch, key) => {
     container.scroll(key.name === 'up' ? -1 : 1);
     screen.render();
   });
 
-  bindKey(['pageup', 'pagedown'], (ch, key) => {
+  bindKey(screen, ['pageup', 'pagedown'], (ch, key) => {
     const scrollAmount = Math.floor(container.height / 2);
     container.scroll(key.name === 'pageup' ? -scrollAmount : scrollAmount);
     screen.render();
   });
 
-  bindKey(['space'], () => {
+  bindKey(screen, ['space'], () => {
     container.scroll(container.height);
     screen.render();
   });
 
-  bindKey(['M-space'], () => {
+  bindKey(screen, ['M-space'], () => {
     container.scroll(-(container.height));
     screen.render();
   });
 
-  bindKey(['home', 'g'], () => {
+  bindKey(screen, ['home', 'g'], () => {
     container.scrollTo(0);
     screen.render();
   });
 
-  bindKey(['end', 'M-g'], () => {
+  bindKey(screen, ['end', 'M-g'], () => {
     container.scrollTo(Infinity); 
     screen.render();
   });
 
-  bindKey(['d'], () => {
+  bindKey(screen, ['d'], () => {
     container.scroll(Math.floor(container.height / 2));
     screen.render();
   });
 
-  bindKey(['u'], () => {
+  bindKey(screen, ['u'], () => {
     container.scroll(-Math.floor(container.height / 2));
     screen.render();
   });

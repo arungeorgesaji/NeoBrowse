@@ -4,14 +4,17 @@ import chalk from 'chalk';
 import blessed from 'blessed'; 
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export class bookmarkManager {
-  constructor(browserInstance) {
+  constructor(browserInstance, screen) {
     this.browser = browserInstance;
+    this.screen = screen;
     this.bookmarks = [];
+    this.overlay = null;
     this.loadBookmarks();
   }
 
@@ -75,8 +78,8 @@ export class bookmarkManager {
       const currentUrl = this.browser.activeTab?.currentUrl;
       const hasCurrentUrl = currentUrl && !bookmarks.some(b => b.url === currentUrl);
 
-      const overlay = blessed.box({
-        parent: this.browser.currentScreen,
+      this.overlay = blessed.box({
+        parent: this.screen,
         top: 0,
         left: 0,
         width: '100%',
@@ -85,11 +88,11 @@ export class bookmarkManager {
       });
 
       const list = blessed.list({
-        parent: overlay,
+        parent: this.overlay,
         top: 'center',
         left: 'center',
         width: '80%',
-        height: '80%',
+        height: '70%',
         border: { type: 'line' },
         style: {
           border: { fg: 'cyan' },
@@ -102,7 +105,7 @@ export class bookmarkManager {
       });
 
       const urlDisplay = blessed.box({
-        parent: overlay,
+        parent: this.overlay,
         bottom: 4,
         left: 'center',
         width: '80%',
@@ -151,7 +154,7 @@ export class bookmarkManager {
         } else {
           urlDisplay.setContent('Select a bookmark to see its URL');
         }
-        this.browser.currentScreen.render();
+        this.screen.render();
       };
 
       list.on('select item', updateUrlDisplay);
@@ -161,50 +164,58 @@ export class bookmarkManager {
       if (bookmarks.length > 0) {
         setTimeout(updateUrlDisplay, 50);
       }
+      
+      blessed.text({
+        parent: this.overlay,
+        top: 1,
+        left: 'center',
+        content: `Bookmarks (${bookmarks.length})`,
+        style: { fg: 'cyan', bold: true }
+      });
 
       blessed.text({
-        parent: overlay,
+        parent: this.overlay,
         bottom: 1,
         left: 1,
         content: 'Enter: Open • D: Delete • Esc: Close • Arrows: Navigate',
         style: { fg: 'gray' }
       });
 
-      list.key(['escape', 'q'], () => {
-        overlay.destroy();
+      bindKey(this.screen, ['escape'], () => {
+        this.overlay.destroy();
         this.browser.isModalOpen = false;
-        this.browser.currentScreen.render();
+        this.screen.render();
       });
 
-      list.key(['enter'], async () => {
+      bindKey(this.screen, ['enter'], async () => {
         const selected = list.selected;
         if (selected >= 0 && selected < bookmarks.length) {
           const bookmark = bookmarks[selected];
-          overlay.destroy();
+          this.overlay.destroy();
           this.browser.isModalOpen = false;
           await this.browser.navigate(bookmark.url);
         } else if (hasCurrentUrl && selected === bookmarks.length) {
           await this.browser.addCurrentToBookmarks();
-          overlay.destroy();
+          this.overlay.destroy();
           this.browser.isModalOpen = false;
           await this.showBookmarks();
         }
       });
 
-      list.key(['d'], async () => {
+      bindKey(this.screen, ['d'], async () => {
         const selected = list.selected;
         if (selected >= 0 && selected < bookmarks.length) {
             const bookmark = bookmarks[selected];
             this.removeBookmark(bookmark.url);
             
-            overlay.destroy();
+            this.overlay.destroy();
             this.browser.isModalOpen = false;
             await this.showBookmarks(); 
         }
       });
 
+      this.screen.render();
       list.focus();
-      this.browser.currentScreen.render();
     } catch (err) {
       console.error(chalk.red('Bookmarks error:'), err);
       this.browser.isModalOpen = false;

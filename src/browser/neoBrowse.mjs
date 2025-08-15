@@ -13,11 +13,19 @@ export class neoBrowse {
     this.currentScreen = null;
     this.warningTimeout = null;
     this.originalFooterContent = null;
-    this.bookmarkManager = new bookmarkManager(this);
-    this.historyManager = new historyManager(this);
-    this.settingsManager = new settingsManager(this);
+    this.bookmarkManager = null;
+    this.historyManager = null;
+    this.settingsManager = null;
     this.isModalOpen = false;
     this.initEventHandlers();
+  }
+
+  initManagers() {
+    if (!this.currentScreen) return;
+    
+    this.bookmarkManager = new bookmarkManager(this, this.currentScreen);
+    this.historyManager = new historyManager(this, this.currentScreen);
+    this.settingsManager = new settingsManager(this, this.currentScreen);
   }
 
   get activeTab() {
@@ -210,5 +218,7 @@ export class neoBrowse {
         onShowSettings: () => this.settingsManager.showSettings(),
       }
     );
+
+    this.initManagers();
   }
 }

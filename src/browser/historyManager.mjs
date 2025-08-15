@@ -1,8 +1,10 @@
 import blessed from 'blessed';
+import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
 
 export class historyManager {
-  constructor(browseInstance) {
+  constructor(browseInstance, screen) {
     this.browse = browseInstance;
+    this.screen = screen;
     this.overlay = null;
     this.historyList = null;
     this.closeCallback = null;
@@ -20,7 +22,7 @@ export class historyManager {
       }
       
       this.overlay = blessed.box({
-        parent: this.browse.currentScreen,
+        parent: this.screen,
         top: 0,
         left: 0,
         width: '100%',
@@ -34,7 +36,7 @@ export class historyManager {
         top: 'center',
         left: 'center',
         width: '80%',
-        height: '80%',
+        height: '70%',
         border: { type: 'line' },
         style: {
           border: { fg: 'cyan' },
@@ -55,6 +57,14 @@ export class historyManager {
             bg: 'blue'
           }
         }
+      });
+
+      blessed.text({
+        parent: this.overlay,
+        top: 1,
+        left: 'center',
+        content: `History (${tab.history.length} items)`,
+        style: { fg: 'cyan', bold: true }
       });
       
       blessed.text({
@@ -96,15 +106,14 @@ export class historyManager {
       };
       
       this.historyList.on('select', handleSelect);
-      this.historyList.key(['escape', 'q', 'C-c'], handleClose);
-      this.overlay.key(['escape', 'q', 'C-c'], handleClose);
-      
+      bindKey(this.screen, ['escape'], handleClose);
+
       if (tab.currentIndex >= 0) {
         this.historyList.scrollTo(tab.currentIndex);
       }
       
       this.historyList.focus();
-      this.browse.currentScreen.render();
+      this.screen.render();
       
     } catch (err) {
       console.error('History screen error:', err);
@@ -129,6 +138,6 @@ export class historyManager {
       this.closeCallback = null;
     }
     
-    this.browse.currentScreen?.render();
+    this.screen?.render();
   }
 }

@@ -2,23 +2,35 @@ import fs from 'fs';
 import path from 'path';
 import blessed from 'blessed';
 import chalk from 'chalk';
+import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
 
 export class settingsManager {
-  constructor(browserInstance) {
+  constructor(browserInstance, screen) {
     this.browser = browserInstance;
+    this.screen = screen;
     this.settings = {
-      searchEngine: 'https://search.brave.com/search?q=',
+      searchEngine: 'https://search.brave.com/search?q={query}&source=web',
       maxDepth: 30,
       maxNodes: 10000,
-      timeout: 5000,
+      timeout: 10000,
       userAgent: 'Mozilla/5.0 (compatible; NeoBrowse/1.0)'
     };
+
+    this.searchEngines = {
+      'https://searx.be/search?q={query}&format=html': 'Searx',
+      'https://search.brave.com/search?q={query}&source=web': 'Brave',
+      'https://duckduckgo.com/html/?q={query}': 'DuckDuckGo',
+      'https://www.startpage.com/do/search?q={query}': 'StartPage',
+    };
+
     this.configPath = path.join(
-      process.env.HOME || process.env.USERPROFILE, 
-      '.neobrowse_config.json'
+      process.env.XDG_CONFIG_HOME || 
+      path.join(process.env.HOME || process.env.USERPROFILE, '.config'),
+      'neobrowse',
+      'config.json'
     );
+
     this.loadSettings();
-    
     this.overlay = null;
     this.settingsList = null;
     this.closeCallback = null;
@@ -28,18 +40,38 @@ export class settingsManager {
   loadSettings() {
     try {
       if (fs.existsSync(this.configPath)) {
-        this.settings = JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
+        const rawData = fs.readFileSync(this.configPath, 'utf8');
+        const loadedSettings = JSON.parse(rawData);
+        
+        this.settings = {
+          ...this.settings,  
+          ...loadedSettings  
+        };
       }
     } catch (err) {
       console.error('Error loading settings:', err);
+      this.browser.showWarning('Corrupt settings - using defaults');
     }
   }
 
   saveSettings() {
     try {
-      fs.writeFileSync(this.configPath, JSON.stringify(this.settings, null, 2));
+      const configDir = path.dirname(this.configPath);
+      if (!fs.existsSync(configDir)) {
+          fs.mkdirSync(configDir, { recursive: true });
+      }
+
+      fs.writeFileSync(
+          this.configPath,
+          JSON.stringify(this.settings, null, 2),
+          { mode: 0o600 }  
+      );
+      
+      return true;
     } catch (err) {
       console.error('Error saving settings:', err);
+      this.browser.showWarning('Failed to save settings');
+      return false;
     }
   }
 
@@ -64,9 +96,8 @@ export class settingsManager {
         parent: this.overlay,
         top: 1,
         left: 'center',
-        content: '{bold}{cyan-fg}Settings{/cyan-fg}{/bold}',
-        tags: true,
-        style: { fg: 'cyan' }
+        content: `Settings`,
+        style: { fg: 'cyan', bold: true }
       });
 
       this.settingsList = blessed.list({
@@ -98,7 +129,7 @@ export class settingsManager {
         parent: this.overlay,
         bottom: 3,
         left: 'center',
-        content: 'Enter: Edit • S: Save • Esc: Close',
+        content: 'Enter: Edit • S: Save • D: Reset Defaults • Esc: Close',
         style: { fg: 'gray' }
       });
 
@@ -110,12 +141,9 @@ export class settingsManager {
         this.cleanup();
       };
 
-      this.settingsList.key(['escape', 'q', 'C-c'], handleClose);
-      this.settingsList.key(['s', 'S'], () => {
-        this.handleSave();
-      });
-
-      this.overlay.key(['escape', 'q', 'C-c'], handleClose);
+      bindKey(this.settingsList, ['s', 'S'], () => this.handleSave())
+      bindKey(this.screen, ['escape'], handleClose);
+      bindKey(this.screen, ['d', 'D'], () => this.showResetConfirmation());
 
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -128,14 +156,7 @@ export class settingsManager {
   }
 
   updateSettingsDisplay() {
-    const searchEngines = {
-      'https://search.brave.com/search?q=': 'Brave',
-      'https://www.google.com/search?q=': 'Google',
-      'https://duckduckgo.com/?q=': 'DuckDuckGo',
-      'https://searx.be/search?q=': 'Searx'
-    };
-
-    const engineName = searchEngines[this.currentSettings.searchEngine] || 'Custom';
+    const engineName = this.searchEngines[this.currentSettings.searchEngine] || 'Custom';
 
     const items = [
       `Search Engine: ${engineName}`,
@@ -165,6 +186,9 @@ export class settingsManager {
         break;
       case 4: 
         this.showUserAgentSelector();
+        break;
+      case 5:
+        this.showResetConfirmation();
         break;
     }
   }
@@ -260,16 +284,15 @@ export class settingsManager {
   }
 
   showSearchEngineSelector() {
-    const searchEngines = {
-      'Brave': 'https://search.brave.com/search?q=',
-      'Google': 'https://www.google.com/search?q=',
-      'DuckDuckGo': 'https://duckduckgo.com/?q=',
-      'Searx': 'https://searx.be/search?q='
-    };
+    const selectorEngines = {};
+    for (const [url, name] of Object.entries(this.searchEngines)) {
+      selectorEngines[name] = url;
+    }
+    selectorEngines['Custom'] = 'custom';
 
     let selectedIndex = 0;
     const currentEngine = this.currentSettings.searchEngine;
-    const entries = Object.entries(searchEngines);
+    const entries = Object.entries(selectorEngines);
     
     for (let i = 0; i < entries.length; i++) {
       if (entries[i][1] === currentEngine) {
@@ -278,7 +301,7 @@ export class settingsManager {
       }
     }
 
-    const displayItems = Object.keys(searchEngines).map((name, index) => {
+    const displayItems = Object.keys(selectorEngines).map((name, index) => {
       const isSelected = index === selectedIndex;
       return isSelected ? `> ${name}` : `  ${name}`;
     });
@@ -303,11 +326,31 @@ export class settingsManager {
     popup.select(selectedIndex);
 
     popup.on('select', (item, index) => {
-      const engines = Object.values(searchEngines);
-      this.currentSettings.searchEngine = engines[index];
-      popup.destroy();
-      this.updateSettingsDisplay();
-      this.settingsList.focus();
+      const engineNames = Object.keys(selectorEngines);
+      const selectedName = engineNames[index];
+      
+      if (selectedName === 'Custom') {
+        popup.destroy();
+        const initialValue = Object.values(selectorEngines).slice(0, -1).includes(currentEngine) 
+          ? '' 
+          : currentEngine;
+          
+        this.showTextInput(
+          'Custom Search Engine', 
+          'searchEngine', 
+          initialValue,
+          (newValue) => {
+            this.currentSettings.searchEngine = newValue;
+            this.updateSettingsDisplay();
+            this.settingsList.focus();
+          }
+        );
+      } else {
+        this.currentSettings.searchEngine = selectorEngines[selectedName];
+        popup.destroy();
+        this.updateSettingsDisplay();
+        this.settingsList.focus();
+      }
     });
 
     popup.key(['escape'], () => {
@@ -459,6 +502,110 @@ export class settingsManager {
     this.showConfirmation();
   }
 
+  showResetConfirmation() {
+    const popup = blessed.box({
+      parent: this.overlay,
+      top: 'center',
+      left: 'center',
+      width: 50,
+      height: 8,
+      border: { type: 'line' },
+      style: {
+        border: { fg: 'red' },
+        bg: 'black'
+      }
+    });
+
+    blessed.text({
+      parent: popup,
+      top: 1,
+      left: 'center',
+      content: 'Reset to defaults?',
+      style: { fg: 'white', bold: true }
+    });
+
+    blessed.text({
+      parent: popup,
+      top: 3,
+      left: 'center',
+      content: 'This cannot be undone',
+      style: { fg: 'red' }
+    });
+
+    const yesButton = blessed.button({
+      parent: popup,
+      top: 5,
+      left: '30%-6',
+      width: 12,
+      height: 1,
+      content: '{center}Yes{/center}',
+      style: {
+        bg: 'red',
+        fg: 'white',
+        focus: { bg: 'darkred' }
+      },
+      tags: true
+    });
+
+    const noButton = blessed.button({
+      parent: popup,
+      top: 5,
+      left: '70%-6',
+      width: 12,
+      height: 1,
+      content: '{center}No{/center}',
+      style: {
+        bg: 'gray',
+        fg: 'white',
+        focus: { bg: 'darkgray' }
+      }, 
+      tags: true
+    });
+
+    yesButton.on('press', () => {
+      this.resetToDefaults();
+      popup.destroy();
+      this.updateSettingsDisplay();
+      this.settingsList.focus();
+    });
+
+    noButton.on('press', () => {
+      popup.destroy();
+      this.settingsList.focus();
+    });
+
+    popup.key(['escape'], () => {
+      popup.destroy();
+      this.settingsList.focus();
+    });
+
+    yesButton.key(['right', 'left'], () => noButton.focus());
+    noButton.key(['left', 'right'], () => yesButton.focus());
+
+    noButton.key(['enter'], () => {
+      popup.destroy();
+      this.settingsList.focus();
+    });
+
+    yesButton.focus();
+    this.browser.currentScreen.render();
+  }
+
+  resetToDefaults() {
+    this.currentSettings = {
+      searchEngine: 'https://search.brave.com/search?q={query}&source=web',
+      maxDepth: 30,
+      maxNodes: 10000,
+      timeout: 10000,
+      userAgent: 'Mozilla/5.0 (compatible; NeoBrowse/1.0)'
+    };
+    
+    this.settings = { ...this.currentSettings };
+    this.saveSettings();
+    
+    this.browser.showMessage('Settings reset to defaults');
+  }
+
   showConfirmation() {
     const popup = blessed.box({
       parent: this.overlay,
@@ -489,7 +636,7 @@ export class settingsManager {
       style: { fg: 'gray' }
     });
 
-    popup.key(['.'], () => {
+    popup.key(['.', 'escape', 'enter', 'space', 'q'], () => {
       popup.destroy();
       this.cleanup();
     });
