@@ -3,6 +3,7 @@ import { historyManager } from './historyManager.mjs';
 import { bookmarkManager } from './bookmarkManager.mjs';
 import { settingsManager } from './settingsManager.mjs';
 import { renderTUI } from '../renderers/tuiRenderer/tuiCore.mjs';
+import { debugPanel } from '../utils/debugPanel.mjs';
 import chalk from 'chalk';
 import blessed from 'blessed';
 
@@ -17,6 +18,8 @@ export class neoBrowse {
     this.historyManager = null;
     this.settingsManager = null;
     this.isModalOpen = false;
+    this.debugPanel = null;
+
     this.initEventHandlers();
   }
 
@@ -218,6 +221,18 @@ export class neoBrowse {
         onShowSettings: () => this.settingsManager.showSettings(),
       }
     );
+
+    if (!this.debugPanel) {
+      this.debugPanel = new debugPanel(this.currentScreen, {
+        toggleKey: 'C-d', 
+        clearKey: 'C-l',
+        maxLines: 100,
+        startHidden: true
+      });
+      this.debugPanel.log('Application initialized');
+    } else {
+      this.debugPanel.panel.parent = this.currentScreen;
+    }
 
     this.initManagers();
   }
