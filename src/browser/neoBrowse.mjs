@@ -3,7 +3,9 @@ import { historyManager } from './historyManager.mjs';
 import { bookmarkManager } from './bookmarkManager.mjs';
 import { settingsManager } from './settingsManager.mjs';
 import { renderTUI } from '../renderers/tuiRenderer/tuiCore.mjs';
+import { scrollToFragment, getFragment } from '../renderers/tuiRenderer/tuiUtils.mjs'
 import { debugPanel } from '../utils/debugPanel.mjs';
+import { state } from '../constants/state.mjs';
 import chalk from 'chalk';
 import blessed from 'blessed';
 
@@ -12,6 +14,7 @@ export class neoBrowse {
     this.tabs = [];
     this.activeTabIndex = -1;
     this.currentScreen = null;
+    this.contentContainer = null;
     this.warningTimeout = null;
     this.originalFooterContent = null;
     this.bookmarkManager = null;
@@ -83,6 +86,8 @@ export class neoBrowse {
 
     try {
       const tabData = await this.activeTab.navigate(url);
+      this.debugPanel.log(url);
+
       if (tabData) {
         this.refreshUI(tabData);
         return true;
@@ -203,7 +208,9 @@ export class neoBrowse {
       this.currentScreen.destroy();
     }
 
-    this.currentScreen = renderTUI(
+    const fragment = getFragment(tabData.url); 
+
+    const { screen, container, elementPositions } = renderTUI(
       tabData.document,
       tabData.title,
       (newUrl) => this.navigate(newUrl),
@@ -219,8 +226,16 @@ export class neoBrowse {
         onShowHistory: () => this.showHistory(),
         onShowBookmarks: () => this.bookmarkManager.showBookmarks(),
         onShowSettings: () => this.settingsManager.showSettings(),
+        initialFragment: fragment,
       }
     );
+
+    this.currentScreen = screen;
+    this.contentContainer = container;
+
+    if (fragment) {
+      scrollToFragment(fragment, container, screen, this.debugPanel, elementPositions);
+    }
 
     if (!this.debugPanel) {
       this.debugPanel = new debugPanel(this.currentScreen, {

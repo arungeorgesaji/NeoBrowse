@@ -55,7 +55,6 @@ export class Tab {
           document: doc,
           url: this.currentUrl,
           title: doc.title || 'NeoBrowse Home',
-          fragment: null,
           historyIndex: this.currentIndex,
           historyLength: this.history.length
         };
@@ -133,13 +132,6 @@ export class Tab {
 
   resolveUrl(url) {
     try {
-      if (!this.currentUrl) {
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-          return 'https://' + url;
-        }
-        return url;
-      }
-
       if (url.startsWith('/')) {
         const baseUrl = new URL(this.currentUrl);
         return baseUrl.origin + url;

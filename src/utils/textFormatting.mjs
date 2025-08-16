@@ -1,6 +1,6 @@
 import { superScriptMap, subScriptMap } from '../constants/scriptMaps.mjs';
 import { addStructuralSeparator } from '../renderers/structuralRenderer.mjs';
-
+import { state } from '../constants/state.mjs';
 import chalk from 'chalk';
 
 export function toSuperScript(text) {
@@ -11,9 +11,17 @@ export function toSubScript(text) {
   return text.split('').map(c => subScriptMap[c] || c).join('');
 }
 
+const elementPositions = new Map();
+let currentLine = 0;
+
 export function formatTextByTag(tagName, text, node, depth = 0) {
   if (!text.trim()) return '';
-  
+
+  const elementId = node?.getAttribute('id') || node?.getAttribute('name');
+  let formattedText = '';
+
+  const startLine = currentLine;
+
   switch (tagName) {
     case 'h1':
       return chalk.bold.yellow(`\n${text}\n${'='.repeat(Math.min(text.length, 80))}\n`);
@@ -146,4 +154,19 @@ export function formatTextByTag(tagName, text, node, depth = 0) {
     default:
       return text;
   }
+
+  const lineCount = formattedText.split('\n').length - 1;
+
+  if (elementId) {
+    elementPositions.set(elementId, {
+      tagName,
+      text: text.substring(0, 30),
+      startLine,
+      endLine: startLine + lineCount,
+      depth
+    });
+  }
+
+  currentLine += lineCount;
+  return formattedText;
 }

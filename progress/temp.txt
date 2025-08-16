@@ -1,5 +1,6 @@
 Fix Settings page
 Actually integrate settings
 Fix tables
-Fix URLFragments
 Add support for files
+
+Make scrollToFragment work on refresh

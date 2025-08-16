@@ -4,8 +4,11 @@ import { extractText } from '../../utils/domHelpers.mjs';
 import { createScreen, createTabBar, createContainer, createHeader, createFooter, createURLTextbox, createSearchTextbox } from './tuiComponents.mjs';
 import { setupHandlers} from './tuiHandlers.mjs';
 import { processContentWithLinks } from './tuiUtils.mjs';
+import { state } from '../../constants/state.mjs';
 
 export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
+  state.elementPositions.clear();
+
   try {
     if (global.currentScreen) {
       try {
@@ -139,7 +142,11 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
       console.error(chalk.red('Final render error:'), renderError.message);
     }
 
-    return screen;
+    return { 
+      screen, 
+      container, 
+      elementPositions: new Map(state.elementPositions) 
+    };
 
   } catch (mainError) {
     console.error(chalk.red('Fatal TUI rendering error:'), mainError.message);

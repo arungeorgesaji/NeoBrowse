@@ -43,18 +43,6 @@ export function scrollToLink(links, linkIndex, container, screen) {
   
   const link = links[linkIndex];
   
-  if (link.href && link.href.startsWith('#')) {
-    const fragment = link.href.substring(1);
-    const element = container.children.find(child => 
-      child.type === 'box' && child.content.includes(`id="${fragment}"`)
-    );
-    
-    if (element) {
-      scrollToElement(element, container, screen);
-    }
-    return;
-  }
-  
   if (link.id !== undefined) {
     const linkText = `[${link.id + 1}]`;
     const rawContent = container.getContent();
@@ -66,6 +54,22 @@ export function scrollToLink(links, linkIndex, container, screen) {
     const lineNumber = calculateLineNumber(cleanContent.substring(0, linkPos), container.width - 2);
     scrollToLine(lineNumber, container, screen);
   }
+}
+
+export function scrollToFragment(fragment, container, screen, debugPanel, elementPositions) {
+  if (!fragment || !container) return;
+
+  debugPanel?.log(`[Fragment] Searching for: #${fragment}`);
+  
+  const elementInfo = elementPositions.get(fragment);
+  if (!elementInfo) {
+    debugPanel?.log(`[Fragment] No position data for #${fragment}`);
+    return;
+  }
+
+  debugPanel?.log(`[Fragment] Scrolling to line ${elementInfo.startLine}`);
+  container.scrollTo(elementInfo.startLine);
+  screen.render();
 }
 
 function calculateLineNumber(textBeforeLink, containerWidth) {
@@ -114,4 +118,8 @@ function scrollToElement(element, container, screen, padding = 2) {
   }
   
   screen.render();
+}
+
+export function getFragment(url) {
+  return url?.match(/#([^#]*)$/)?.[1] ?? null;
 }
