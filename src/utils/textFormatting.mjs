@@ -11,16 +11,46 @@ export function toSubScript(text) {
   return text.split('').map(c => subScriptMap[c] || c).join('');
 }
 
+function collectFragments(node) {
+  const fragments = new Set();
+  
+  function traverse(element) {
+    if (element.tagName === 'A') {
+      const href = element.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        const fragment = href.substring(1);
+        if (fragment) {
+          fragments.add(fragment);
+        }
+      }
+    }
+    
+    // Recursively check child nodes
+    for (const child of element.children || []) {
+      traverse(child);
+    }
+  }
+  
+  traverse(node);
+  return fragments;
+}
+
+function initializeFragments(rootNode, context) {
+  context.fragmentTargets = collectFragments(rootNode);
+}
+
 const elementPositions = new Map();
 let currentLine = 0;
 
-export function formatTextByTag(tagName, text, node, depth = 0) {
+export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', context = {}) {
   if (!text.trim()) return '';
 
   const elementId = node?.getAttribute('id') || node?.getAttribute('name');
-  let formattedText = '';
+  const isFragmentTarget = elementId && context.fragmentTargets?.has(elementId);
 
-  const startLine = currentLine;
+  if (isFragmentTarget) {
+    text = `{fragment-target}${text}{/fragment-target}`;
+  }
 
   switch (tagName) {
     case 'h1':
@@ -48,6 +78,13 @@ export function formatTextByTag(tagName, text, node, depth = 0) {
         }
       } catch (e) {
         absoluteUrl = href;
+      }
+
+      if (href.startsWith('#')) {
+        const fragment = href.substring(1);
+        if (fragment) {
+          context.fragmentTargets?.add(fragment);
+        }
       }
 
       return `{underline}{cyan-fg}${text}{/cyan-fg}{/underline}{#${absoluteUrl}}`;
@@ -154,19 +191,4 @@ export function formatTextByTag(tagName, text, node, depth = 0) {
     default:
       return text;
   }
-
-  const lineCount = formattedText.split('\n').length - 1;
-
-  if (elementId) {
-    elementPositions.set(elementId, {
-      tagName,
-      text: text.substring(0, 30),
-      startLine,
-      endLine: startLine + lineCount,
-      depth
-    });
-  }
-
-  currentLine += lineCount;
-  return formattedText;
 }

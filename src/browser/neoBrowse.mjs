@@ -5,7 +5,6 @@ import { settingsManager } from './settingsManager.mjs';
 import { renderTUI } from '../renderers/tuiRenderer/tuiCore.mjs';
 import { scrollToFragment, getFragment } from '../renderers/tuiRenderer/tuiUtils.mjs'
 import { debugPanel } from '../utils/debugPanel.mjs';
-import { state } from '../constants/state.mjs';
 import chalk from 'chalk';
 import blessed from 'blessed';
 
@@ -210,7 +209,7 @@ export class neoBrowse {
 
     const fragment = getFragment(tabData.url); 
 
-    const { screen, container, elementPositions } = renderTUI(
+    const { screen, container } = renderTUI(
       tabData.document,
       tabData.title,
       (newUrl) => this.navigate(newUrl),
@@ -234,7 +233,7 @@ export class neoBrowse {
     this.contentContainer = container;
 
     if (fragment) {
-      scrollToFragment(fragment, container, screen, this.debugPanel, elementPositions);
+      scrollToFragment(fragment, container, screen, this.debugPanel);
     }
 
     if (!this.debugPanel) {

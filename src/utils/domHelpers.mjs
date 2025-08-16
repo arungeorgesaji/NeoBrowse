@@ -8,7 +8,9 @@ export function extractText(node, depth = 0, baseUrl = '', context = {}) {
     context = {
       seenNodes: new Set(),
       nodeCount: 0,
-      startTime: Date.now()
+      startTime: Date.now(),
+      fragmentTargets: new Set(),
+      baseUrl: baseUrl
     };
   }
 
@@ -62,7 +64,7 @@ export function extractText(node, depth = 0, baseUrl = '', context = {}) {
         }
       }
       
-      const result = formatTextByTag(tagName, parts.join(''), node, depth, baseUrl);
+      const result = formatTextByTag(tagName, parts.join(''), node, depth, baseUrl, context);
       nodeCache.set(node, result);
       return result;
     }

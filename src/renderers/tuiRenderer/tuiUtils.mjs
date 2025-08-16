@@ -56,20 +56,38 @@ export function scrollToLink(links, linkIndex, container, screen) {
   }
 }
 
-export function scrollToFragment(fragment, container, screen, debugPanel, elementPositions) {
-  if (!fragment || !container) return;
+export function scrollToFragment(fragment, container, screen,debugPanel, padding = 2) {
+  if (!fragment) return;
 
-  debugPanel?.log(`[Fragment] Searching for: #${fragment}`);
+  const rawContent = container.getContent();
+
+  debugPanel?.log(rawContent);
+
+  const fragmentRegex = new RegExp(
+    `\\{fragment-target\\}([^\\{]*${fragment}[^\\{]*)\\{\\/fragment-target\\}`
+  );
+  const fragmentMatch = rawContent.match(fragmentRegex);
+  if (!fragmentMatch) return;
+
   
-  const elementInfo = elementPositions.get(fragment);
-  if (!elementInfo) {
-    debugPanel?.log(`[Fragment] No position data for #${fragment}`);
-    return;
+  const cleanContentBefore = rawContent
+    .substring(0, fragmentMatch.index)
+    .replace(/\{[^}]*\}/g, '');
+  
+  const linesBefore = cleanContentBefore.split('\n');
+  const lineNumber = linesBefore.length - 1;
+  
+  const currentScroll = container.getScroll();
+  const visibleHeight = container.height;
+  
+  if (
+    lineNumber < currentScroll || 
+    lineNumber > currentScroll + visibleHeight - padding * 2
+  ) {
+    const targetScroll = Math.max(0, lineNumber - Math.floor(visibleHeight / 2));
+    container.scrollTo(targetScroll);
+    screen.render();
   }
-
-  debugPanel?.log(`[Fragment] Scrolling to line ${elementInfo.startLine}`);
-  container.scrollTo(elementInfo.startLine);
-  screen.render();
 }
 
 function calculateLineNumber(textBeforeLink, containerWidth) {
