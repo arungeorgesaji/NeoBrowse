@@ -45,23 +45,23 @@ export class debugPanel {
     this.info(`Session started at ${this.sessionStartTime}`, LOG_LEVELS.INFO);
 
     if (options.toggleKey) {
-      bindKey(this.screen, [options.toggleKey], this.debugPanel, () => this.toggle());
+      bindKey(this.screen, [options.toggleKey], this, () => this.toggle());
     }
 
     if (options.clearKey) {
-      bindKey(this.screen, [options.clearKey], this.debugPanel, () => this.clearVisible());
+      bindKey(this.screen, [options.clearKey], this, () => this.clearVisible());
     }
 
     if (options.fullClearKey) {
-      bindKey(this.screen, [options.fullClearKey], this.debugPanel, () => this.fullClear());
+      bindKey(this.screen, [options.fullClearKey], this, this.debugPanel, () => this.fullClear());
     }
 
     if (options.levelUpKey) {
-      bindKey(this.screen, [options.levelUpKey], () => this.adjustLogLevel(1));
+      bindKey(this.screen, [options.levelUpKey], this, () => this.adjustLogLevel(1));
     }
 
     if (options.levelDownKey) {
-      bindKey(this.screen, [options.levelDownKey], () => this.adjustLogLevel(-1));
+      bindKey(this.screen, [options.levelDownKey], this, () => this.adjustLogLevel(-1));
     }
   }
 
@@ -213,7 +213,7 @@ export class debugPanel {
       this.screen.render();
     });
 
-    bindKey(popup, ['escape'], this.debugPanel, () => {
+    bindKey(popup, ['escape'], this, () => {
       popup.destroy();
       this.screen.render();
     });

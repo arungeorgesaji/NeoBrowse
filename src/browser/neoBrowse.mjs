@@ -23,7 +23,7 @@ export class neoBrowse {
     this.isModalOpen = false;
     this.debugPanel = null;
 
-    this.initDebugPanel();
+    this.initManagers();
     this.initEventHandlers();
     this.debugPanel?.info("Neobrowse instance initialized")
   }
@@ -170,6 +170,7 @@ export class neoBrowse {
       return false;
     }
 
+    const closedTab = this.tabs[this.activeTabIndex];
     this.tabs.splice(this.activeTabIndex, 1);
     this.activateLastTab();
 
@@ -277,10 +278,11 @@ export class neoBrowse {
     this.currentScreen = screen;
     this.contentContainer = container;
 
+    this.initDebugPanel();
+    this.debugPanel?.info("Screen Initialized");
+
     if (fragment) {
       scrollToFragment(fragment, container, screen, this.debugPanel);
     }
-
-    this.initManagers();
   }
 }

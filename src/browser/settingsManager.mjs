@@ -574,7 +574,7 @@ export class settingsManager {
     this.debugPanel?.info("Saving settings changes");
     this.settings = { ...this.currentSettings };
     if (this.saveSettings()) {
-      this.debugPanel?.debug("Showing save confirmation"); / 
+      this.debugPanel?.debug("Showing save confirmation");  
       this.showConfirmation();
     }
   }

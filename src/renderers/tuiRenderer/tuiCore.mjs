@@ -7,11 +7,20 @@ import { processContentWithLinks } from './tuiUtils.mjs';
 
 export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debugPanel) {
   try {
+    debugPanel?.info('Starting TUI rendering', {
+      pageTitle,
+      hasDocument: Boolean(document),
+      tabCount: tabOptions.tabs?.length || 0
+    });
+
     if (global.currentScreen) {
       try {
+        debugPanel?.debug('Cleaning up previous screen');
         global.currentScreen.destroy();
       } catch (cleanupError) {
-        console.error(chalk.red('Screen cleanup error:'), cleanupError.message);
+        debugPanel?.error('Screen cleanup failed', {
+          error: cleanupError.message
+        });
       }
     }
 
@@ -20,10 +29,13 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
 
     screen.on('resize', () => {
       try {
+        debugPanel?.trace('Handling screen resize');
         screen.emit('repaint');
         screen.render();
       } catch (resizeError) {
-        console.error(chalk.red('Resize handler error:'), resizeError.message);
+        debugPanel?.error('Resize handler failed', {
+          error: resizeError.message
+        });
       }
     });
 
@@ -34,22 +46,38 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
 
     try {
       if (document?.body) {
-        const rawContent = extractText(document.body, 0, tabOptions.tabs?.find(t => t.active)?.currentUrl || '', debugPanel);
+        debugPanel?.debug('Extracting document content');
+        const currentUrl = tabOptions.tabs?.find(t => t.active)?.currentUrl || '';
+        const rawContent = extractText(document.body, 0, currentUrl, debugPanel);
+        
+        debugPanel?.debug('Processing links in content');
         const result = processContentWithLinks(rawContent, debugPanel);
         content = result?.processedContent || chalk.yellow('No processable content');
         links = result?.links || [];
+        
+        debugPanel?.info('Content processing complete', {
+          contentLength: content.length,
+          linkCount: links.length
+        });
       } else {
         content = chalk.red('No document body found');
+        debugPanel?.warn('Missing document body');
       }
     } catch (contentError) {
       content = chalk.red(`Content processing failed: ${contentError.message}`);
-      console.error(chalk.red('Content error:'), contentError);
+      debugPanel?.error('Content processing error', {
+        error: contentError.message,
+        stack: contentError.stack?.split('\n')[0]
+      });
     }
 
     try {
+      debugPanel?.debug('Setting container content');
       container.setContent(content);
     } catch (contentSetError) {
-      console.error(chalk.red('Content setting error:'), contentSetError.message);
+      debugPanel?.error('Failed to set container content', {
+        error: contentSetError.message
+      });
       container.setContent(chalk.red('Could not display page content'));
     }
 
@@ -61,63 +89,79 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
     const components = [header, tabBar, container, footer, urlInput, searchInput];
     components.forEach(component => {
       try {
+        debugPanel?.trace(`Appending component: ${component.type}`);
         screen.append(component);
       } catch (appendError) {
-        console.error(chalk.red('Component append error:'), appendError.message);
+        debugPanel?.error('Component append failed', {
+          component: component.type,
+          error: appendError.message
+        });
       }
     });
 
     const updateTabItems = () => {
       try {
         const tabs = tabOptions.tabs || [];
+        debugPanel?.debug('Updating tab bar items', {
+          tabCount: tabs.length
+        });
+
         const tabItems = {};
-        
         tabs.forEach((tab, i) => {
-          const isActive = tab.active;
           const displayText = tab.title.substring(0, 20) + (tab.title.length > 20 ? '...' : '');
-          
           tabItems[i] = {
-            text: displayText,  
+            text: displayText,
             callback: () => {
               if (tabOptions.onSwitchTab) {
                 try {
+                  debugPanel?.info('Switching tabs', {
+                    tabIndex: i,
+                    title: tab.title
+                  });
                   tabOptions.onSwitchTab(i);
                   updateTabItems();
                   screen.render();
                 } catch (tabSwitchError) {
-                  console.error(chalk.red('Tab switch error:'), tabSwitchError.message);
+                  debugPanel?.error('Tab switch failed', {
+                    tabIndex: i,
+                    error: tabSwitchError.message
+                  });
                 }
               }
             }
           };
         });
-        
+
         tabBar.setItems(tabItems);
-        
         tabs.forEach((tab, i) => {
-          const isActive = tab.active;
           if (tabBar.items[i]) {
             tabBar.items[i].style = {
-              bg: isActive ? 'cyan' : 'blue',
-              fg: isActive ? 'black' : 'white',
-              bold: isActive,
+              bg: tab.active ? 'cyan' : 'blue',
+              fg: tab.active ? 'black' : 'white',
+              bold: tab.active,
             };
           }
         });
       } catch (tabError) {
-        console.error(chalk.red('Tab update error:'), tabError.message);
+        debugPanel?.error('Tab update failed', {
+          error: tabError.message
+        });
       }
     };
 
     updateTabItems();
 
     try {
+      debugPanel?.debug('Setting initial focus');
       container.focus();
     } catch (focusError) {
-      console.error(chalk.red('Focus error:'), focusError.message);
+      debugPanel?.error('Failed to set focus', {
+        error: focusError.message
+      });
     }
 
     try {
+      debugPanel?.info('Setting up event handlers');
       setupHandlers({
         screen,
         container,
@@ -131,22 +175,32 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
         debugPanel
       });
     } catch (handlerError) {
-      console.error(chalk.red('Handler setup error:'), handlerError.message);
+      debugPanel?.error('Handler setup failed', {
+        error: handlerError.message,
+        stack: handlerError.stack?.split('\n')[0]
+      });
     }
 
     try {
+      debugPanel?.debug('Performing final render');
       screen.render();
+      debugPanel?.info('TUI rendering complete');
+      return { screen, container };
     } catch (renderError) {
-      console.error(chalk.red('Final render error:'), renderError.message);
+      debugPanel?.error('Final render failed', {
+        error: renderError.message
+      });
+      throw renderError;
     }
-
-    return { screen, container };
 
   } catch (mainError) {
-    console.error(chalk.red('Fatal TUI rendering error:'), mainError.message);
-    console.error(mainError.stack);
-    
+    debugPanel?.error('Fatal TUI rendering error', {
+      error: mainError.message,
+      stack: mainError.stack?.split('\n').slice(0, 3).join('\n')
+    });
+
     try {
+      debugPanel?.warn('Creating fallback error screen');
       const errorScreen = blessed.screen({ smartCSR: true });
       errorScreen.append(blessed.box({
         content: chalk.red(`Fatal Error:\n${mainError.message}\n\nCheck console for details`),
@@ -160,7 +214,9 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
       errorScreen.render();
       return errorScreen;
     } catch (fallbackError) {
-      console.error(chalk.red('Could not create fallback screen:'), fallbackError.message);
+      debugPanel?.error('Fallback screen creation failed', {
+        error: fallbackError.message
+      });
       process.exit(1);
     }
   }

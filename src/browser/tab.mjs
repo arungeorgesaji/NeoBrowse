@@ -36,7 +36,7 @@ export class Tab {
       await dns.lookup(url.hostname);
       this.debugPanel?.debug(`Valid URL: ${trimmed}`); 
       return true;
-    } catch {
+    } catch (err) {
       this.debugPanel?.warn(`Invalid URL: ${trimmed} - ${err.message}`);
       return false;
     }
