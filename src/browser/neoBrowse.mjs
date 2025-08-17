@@ -84,7 +84,6 @@ export class neoBrowse {
 
     try {
       const tabData = await this.activeTab.navigate(url);
-      this.debugPanel.log(url);
 
       if (tabData) {
         this.refreshUI(tabData);
@@ -238,7 +237,6 @@ export class neoBrowse {
     if (this.debugPanel) {
       this.debugPanel.panel.parent = this.currentScreen;
       if (!this.debugPanel.initialized) {
-        this.debugPanel.log('Application initialized');
         this.debugPanel.initialized = true;
       }
     }

@@ -61,8 +61,6 @@ export function scrollToFragment(fragment, container, screen,debugPanel, padding
 
   const rawContent = container.getContent();
 
-  debugPanel?.log(rawContent);
-
   const fragmentRegex = new RegExp(
     `\\{fragment-target\\}([^\\{]*${fragment}[^\\{]*)\\{\\/fragment-target\\}`
   );
