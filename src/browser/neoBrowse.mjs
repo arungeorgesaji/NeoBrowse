@@ -4,14 +4,15 @@ import { bookmarkManager } from './bookmarkManager.mjs';
 import { settingsManager } from './settingsManager.mjs';
 import { renderTUI } from '../renderers/tuiRenderer/tuiCore.mjs';
 import { scrollToFragment, getFragment } from '../renderers/tuiRenderer/tuiUtils.mjs'
+import { debugPanel } from '../utils/debugPanel.mjs';
 import chalk from 'chalk';
 import blessed from 'blessed';
 
 export class neoBrowse {
-  constructor(screen, debugPanel) {
+  constructor() {
     this.tabs = [];
     this.activeTabIndex = -1;
-    this.currentScreen = screen;
+    this.currentScreen = null;
     this.contentContainer = null;
     this.warningTimeout = null;
     this.originalFooterContent = null;
@@ -19,7 +20,7 @@ export class neoBrowse {
     this.historyManager = null;
     this.settingsManager = null;
     this.isModalOpen = false;
-    this.debugPanel = debugPanel;
+    this.debugPanel = null;
 
     this.initEventHandlers();
   }
@@ -84,6 +85,7 @@ export class neoBrowse {
 
     try {
       const tabData = await this.activeTab.navigate(url);
+      this.debugPanel.log(url);
 
       if (tabData) {
         this.refreshUI(tabData);
@@ -224,7 +226,8 @@ export class neoBrowse {
         onShowBookmarks: () => this.bookmarkManager.showBookmarks(),
         onShowSettings: () => this.settingsManager.showSettings(),
         initialFragment: fragment,
-      }
+      },
+      this.debugPanel
     );
 
     this.currentScreen = screen;
@@ -234,11 +237,17 @@ export class neoBrowse {
       scrollToFragment(fragment, container, screen, this.debugPanel);
     }
 
-    if (this.debugPanel) {
+    if (!this.debugPanel) {
+      this.debugPanel = new debugPanel(this.currentScreen, {
+        toggleKey: 'C-d', 
+        clearKey: 'C-k',
+        fullClearKey: 'C-f',
+        maxLines: 100,
+        startHidden: true
+      });
+      this.debugPanel.log('Application initialized');
+    } else {
       this.debugPanel.panel.parent = this.currentScreen;
-      if (!this.debugPanel.initialized) {
-        this.debugPanel.initialized = true;
-      }
     }
 
     this.initManagers();

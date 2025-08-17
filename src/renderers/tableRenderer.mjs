@@ -18,7 +18,7 @@ export function renderTable(node, debugPanel) {
   rowsElements.forEach(tr => {
     const row = [];
     tr.querySelectorAll('th, td').forEach(cell => {
-      row.push(extractText(cell).trim());
+      row.push(extractText(cell, debugPanel).trim());
     });
     if (row.length) rows.push(row);
   });

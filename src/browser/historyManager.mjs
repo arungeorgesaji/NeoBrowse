@@ -107,7 +107,7 @@ export class historyManager {
       };
       
       this.historyList.on('select', handleSelect);
-      bindKey(this.screen, ['escape'], handleClose);
+      bindKey(this.screen, ['escape'], this.debugPanel, handleClose);
 
       if (tab.currentIndex >= 0) {
         this.historyList.scrollTo(tab.currentIndex);

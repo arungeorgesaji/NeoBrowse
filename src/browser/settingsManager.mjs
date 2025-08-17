@@ -143,9 +143,9 @@ export class settingsManager {
         this.cleanup();
       };
 
-      bindKey(this.settingsList, ['s', 'S'], () => this.handleSave())
-      bindKey(this.screen, ['escape'], handleClose);
-      bindKey(this.screen, ['d', 'D'], () => this.showResetConfirmation());
+      bindKey(this.settingsList, ['s', 'S'], this.debugPanel, () => this.handleSave());
+      bindKey(this.screen, ['escape'], this.debugPanel, handleClose);
+      bindKey(this.screen, ['d', 'D'], this.debugPanel, () => this.showResetConfirmation());
 
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -236,7 +236,7 @@ export class settingsManager {
       this.settingsList.focus();
     });
 
-    bindKey(popup, ['escape'], () => {
+    bindKey(popup, ['escape'], this.debugPanel, () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -326,7 +326,7 @@ export class settingsManager {
       }
     });
 
-    bindKey(popup, ['escape'], () => {
+    bindKey(popup, ['escape'], this.debugPanel, () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -406,7 +406,7 @@ export class settingsManager {
       }
     });
 
-    bindKey(popup, ['escape'], () => {
+    bindKey(popup, ['escape'], this.debugPanel, () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -471,7 +471,7 @@ export class settingsManager {
       }
     });
 
-    bindKey(input, ['escape'], () => {
+    bindKey(input, ['escape'], this.debugPanel, () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -539,7 +539,7 @@ export class settingsManager {
       }
     });
 
-    bindKey(input,input,  ['escape'], () => {
+    bindKey(input,input,  ['escape'], this.debugPanel, () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -627,13 +627,13 @@ export class settingsManager {
       this.settingsList.focus();
     });
 
-    bindKey(popup, ['escape'], () => {
+    bindKey(popup, ['escape'], this.debugPanel, () => {
       popup.destroy();
       this.settingsList.focus();
     });
 
-    bindKey(yesButton, ['right', 'left'], () => noButton.focus());
-    bindKey(noButton, ['left', 'right'], () => yesButton.focus());
+    bindKey(yesButton, ['right', 'left'], this.debugPanel, () => noButton.focus());
+    bindKey(noButton, ['left', 'right'], this.debugPanel, () => yesButton.focus());
 
     noButton.key(['enter'], () => {
       popup.destroy();
@@ -690,7 +690,7 @@ export class settingsManager {
       style: { fg: 'gray' }
     });
 
-    bindKey(popup, ['.', 'escape', 'enter', 'space', 'q'], () => {
+    bindKey(popup, ['.', 'escape', 'enter', 'space', 'q'], this.debugPanel, () => {
       popup.destroy();
       this.cleanup();
     });

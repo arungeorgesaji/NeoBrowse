@@ -7,7 +7,6 @@ import chalk from 'chalk';
 export class debugPanel {
   constructor(screen, options = {}) {
     this.screen = screen;
-    this.initialized = false;
     this.logFilePath = options.logFilePath || './debug.log';
     this.maxFileLines = options.maxFileLines || 100000; 
     this.sessionLogs = []; 
@@ -44,19 +43,19 @@ export class debugPanel {
     this.log(`Session started at ${this.sessionStartTime}`, LOG_LEVELS.INFO);
 
     if (options.toggleKey) {
-      bindKey(this.screen, [options.toggleKey], () => this.toggle());
+      bindKey(this.screen, [options.toggleKey], this.debugPanel, () => this.toggle());
     }
 
     if (options.clearKey) {
-      bindKey(this.screen, [options.clearKey], () => this.clearVisible());
+      bindKey(this.screen, [options.clearKey], this.debugPanel, () => this.clearVisible());
     }
 
     if (options.fullClearKey) {
-      bindKey(this.screen, [options.fullClearKey], () => this.fullClear());
+      bindKey(this.screen, [options.fullClearKey], this.debugPanel, () => this.fullClear());
     }
 
     if (options.setLevelKey) {
-      bindKey(this.screen, [options.setLevelKey], () => this.showLogLevelSelector());
+      bindKey(this.screen, [options.setLevelKey], this.debugPanel, () => this.showLogLevelSelector());
     }
   }
 
@@ -199,7 +198,7 @@ export class debugPanel {
       this.screen.render();
     });
 
-    bindKey(popup, ['escape'], () => {
+    bindKey(popup, ['escape'], this.debugPanel, () => {
       popup.destroy();
       this.screen.render();
     });

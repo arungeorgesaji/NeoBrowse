@@ -48,7 +48,7 @@ export class Tab {
         console.log(chalk.blue('Navigating to homepage...'));
         const homepagePath = path.join(process.cwd(), 'index.html');
         const htmlContent = fs.readFileSync(homepagePath, 'utf8');
-        const doc = parseHTML(htmlContent);
+        const doc = parseHTML(htmlContent, this.debugPanel);
         
         this.currentDocument = doc;
 
@@ -111,8 +111,8 @@ export class Tab {
       }
 
       console.log(chalk.blue(`Fetching ${url}...`));
-      const html = await fetchHTML(url);
-      const doc = parseHTML(html);
+      const html = await fetchHTML(url, this.debugPanel);
+      const doc = parseHTML(html, this.debugPanel);
       
       this.currentUrl = url;
       this.currentDocument = doc;

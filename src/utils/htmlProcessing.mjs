@@ -1,5 +1,3 @@
-import { extractText } from './domHelpers.mjs';
-import { renderTable } from '../renderers/tableRenderer.mjs';
 import { JSDOM } from 'jsdom';
 
 export function parseHTML(html, debugPanel){

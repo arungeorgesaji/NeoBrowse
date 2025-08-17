@@ -1,6 +1,5 @@
 import { superScriptMap, subScriptMap } from '../constants/scriptMaps.mjs';
 import { addStructuralSeparator } from '../renderers/structuralRenderer.mjs';
-import { state } from '../constants/state.mjs';
 import chalk from 'chalk';
 
 export function toSuperScript(text, debugPanel) {

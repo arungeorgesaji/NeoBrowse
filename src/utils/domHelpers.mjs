@@ -64,7 +64,7 @@ export function extractText(node, depth = 0, baseUrl = '', context = {}, debugPa
         }
       }
       
-      const result = formatTextByTag(tagName, parts.join(''), node, depth, baseUrl, context);
+      const result = formatTextByTag(tagName, parts.join(''), node, depth, baseUrl, context, debugPanel);
       nodeCache.set(node, result);
       return result;
     }

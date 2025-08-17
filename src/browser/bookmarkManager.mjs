@@ -182,13 +182,13 @@ export class bookmarkManager {
         style: { fg: 'gray' }
       });
 
-      bindKey(this.screen, ['escape'], () => {
+      bindKey(this.screen, ['escape'], this.debugPanel, () => {
         this.overlay.destroy();
         this.browser.isModalOpen = false;
         this.screen.render();
       });
 
-      bindKey(this.screen, ['enter'], async () => {
+      bindKey(this.screen, ['enter'], this.debugPanel, async () => {
         const selected = list.selected;
         if (selected >= 0 && selected < bookmarks.length) {
           const bookmark = bookmarks[selected];
@@ -203,7 +203,7 @@ export class bookmarkManager {
         }
       });
 
-      bindKey(this.screen, ['d'], async () => {
+      bindKey(this.screen, ['d'], this.debugPanel, async () => {
         const selected = list.selected;
         if (selected >= 0 && selected < bookmarks.length) {
             const bookmark = bookmarks[selected];

@@ -1,6 +1,6 @@
 import { highlightFocusedLink, scrollToLink } from './tuiUtils.mjs';
 
-export function bindKey(element, keys, handler, debugPanel) {
+export function bindKey(element, keys, debugPanel, handler) {
   if (!element || typeof element.key !== 'function') {
     console.warn('bindKey: element must have a .key() method');
     return;
@@ -136,16 +136,16 @@ export function setupHandlers({
     if (links.length === 0) return;
     
     focusedLinkIndex = (focusedLinkIndex + 1) % links.length;
-    highlightFocusedLink(content, links, focusedLinkIndex, container, screen);
-    scrollToLink(links, focusedLinkIndex, container, screen);
+    highlightFocusedLink(content, links, focusedLinkIndex, container, screen, debugPanel);
+    scrollToLink(links, focusedLinkIndex, container, screen, debugPanel);
   });
 
   bindKey(screen, ['j', 'left'], () => {
     if (links.length === 0) return;
     
     focusedLinkIndex = (focusedLinkIndex - 1 + links.length) % links.length;
-    highlightFocusedLink(content, links, focusedLinkIndex, container, screen);
-    scrollToLink(links, focusedLinkIndex, container, screen);
+    highlightFocusedLink(content, links, focusedLinkIndex, container, screen, debugPanel);
+    scrollToLink(links, focusedLinkIndex, container, screen, debugPanel);
   });
 
   bindKey(screen, ['enter'], () => {

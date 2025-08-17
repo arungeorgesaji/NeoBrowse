@@ -2,7 +2,7 @@ import blessed from 'blessed';
 import chalk from 'chalk';
 import { extractText } from '../../utils/domHelpers.mjs';
 import { createScreen, createTabBar, createContainer, createHeader, createFooter, createURLTextbox, createSearchTextbox } from './tuiComponents.mjs';
-import { setupHandlers} from './tuiHandlers.mjs';
+import { setupHandlers } from './tuiHandlers.mjs';
 import { processContentWithLinks } from './tuiUtils.mjs';
 
 export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debugPanel) {
@@ -15,7 +15,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
       }
     }
 
-    const screen = createScreen(pageTitle);
+    const screen = createScreen(pageTitle, debugPanel);
     global.currentScreen = screen;
 
     screen.on('resize', () => {
@@ -27,15 +27,15 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
       }
     });
 
-    const tabBar = createTabBar();
-    const container = createContainer();
+    const tabBar = createTabBar(debugPanel);
+    const container = createContainer(debugPanel);
     let content = '';
     let links = [];
 
     try {
       if (document?.body) {
-        const rawContent = extractText(document.body, 0, tabOptions.tabs?.find(t => t.active)?.currentUrl || '');
-        const result = processContentWithLinks(rawContent);
+        const rawContent = extractText(document.body, 0, tabOptions.tabs?.find(t => t.active)?.currentUrl || '', debugPanel);
+        const result = processContentWithLinks(rawContent, debugPanel);
         content = result?.processedContent || chalk.yellow('No processable content');
         links = result?.links || [];
       } else {
@@ -53,10 +53,10 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
       container.setContent(chalk.red('Could not display page content'));
     }
 
-    const header = createHeader(pageTitle);
-    const footer = createFooter();
-    const urlInput = createURLTextbox();
-    const searchInput = createSearchTextbox();
+    const header = createHeader(pageTitle, debugPanel);
+    const footer = createFooter(debugPanel);
+    const urlInput = createURLTextbox(debugPanel);
+    const searchInput = createSearchTextbox(debugPanel);
 
     const components = [header, tabBar, container, footer, urlInput, searchInput];
     components.forEach(component => {
@@ -128,6 +128,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
         links,
         updateTabItems,
         content,
+        debugPanel
       });
     } catch (handlerError) {
       console.error(chalk.red('Handler setup error:'), handlerError.message);
