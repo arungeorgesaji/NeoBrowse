@@ -9,18 +9,30 @@ export class historyManager {
     this.overlay = null;
     this.historyList = null;
     this.closeCallback = null;
+
+    this.debugPanel?.info("History manager initialized");
   }
   
   showHistory(closeCallback) {
     try {
       this.closeCallback = closeCallback;
       const tab = this.browse.activeTab;
-      
-      if (!tab?.history || tab.history.length === 0) {
+
+      if (!tab?.history) {
+        this.debugPanel?.warn("No tab or history available"); 
         this.browse.showWarning("No history available");
         if (this.closeCallback) this.closeCallback();
         return;
       }
+    
+      if (tab.history.length === 0) {
+        this.debugPanel?.debug("Empty history for current tab"); 
+        this.browse.showWarning("No history available");
+        if (this.closeCallback) this.closeCallback();
+        return;
+      }
+
+      this.debugPanel?.info(`Displaying history (${tab.history.length} items)`);
       
       this.overlay = blessed.box({
         parent: this.screen,
@@ -31,6 +43,8 @@ export class historyManager {
         bg: 'black',
         tags: true
       });
+
+      this.debugPanel?.debug("Created history overlay");
       
       this.historyList = blessed.list({
         parent: this.overlay,
@@ -60,6 +74,8 @@ export class historyManager {
         }
       });
 
+      this.debugPanel?.debug(`Populated history list with ${tab.history.length} items`);
+
       blessed.text({
         parent: this.overlay,
         top: 1,
@@ -77,11 +93,14 @@ export class historyManager {
       });
       
       const handleSelect = async (item, index) => {
+        this.debugPanel?.debug(`Selected history item ${index}: ${tab.history[index]}`);
+
         try {
           this.cleanup();
           const tab = this.browse.activeTab;
 
           if (index === tab.currentIndex) {
+            this.debugPanel?.debug("Selected current page in history");
             this.browse.showWarning("You're already on this page!");
             return;
           }
@@ -90,19 +109,25 @@ export class historyManager {
             historyIndex: index,
             replaceHistory: true
           });
-          
+
+          this.debugPanel?.info(`Navigated to history item ${index}`);
+ 
           this.browse.refreshUI({
             document: tab.currentDocument,
             url: tab.currentUrl,
             title: tab.currentDocument?.title || tab.currentUrl || 'New Tab'
           });
         } catch (err) {
-          console.error('Navigation error:', err);
+          this.debugPanel?.error(`History navigation failed: ${err.message}`, { 
+            index,
+            url: tab.history[index]
+          });
           this.browse.showWarning('Failed to navigate to selected URL');
         }
       };
       
       const handleClose = () => {
+        this.debugPanel?.debug("History modal closed by user");
         this.cleanup();
       };
       
@@ -117,6 +142,7 @@ export class historyManager {
       this.screen.render();
       
     } catch (err) {
+      this.debugPanel?.error(`History screen error: ${err.message}`);
       console.error('History screen error:', err);
       this.browse.showWarning('Failed to show history');
       this.cleanup();
@@ -124,6 +150,8 @@ export class historyManager {
   }
   
   cleanup() {
+    this.debugPanel?.debug("Cleaning up history manager resources");
+
     if (this.historyList) {
       this.historyList.removeAllListeners();
       this.historyList = null;
@@ -135,6 +163,7 @@ export class historyManager {
     }
     
     if (this.closeCallback) {
+      this.debugPanel?.debug("Executing history close callback");
       this.closeCallback();
       this.closeCallback = null;
     }

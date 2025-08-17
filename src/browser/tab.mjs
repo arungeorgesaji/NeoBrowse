@@ -14,26 +14,30 @@ export class Tab {
     this.active = false;
     this.MAX_HISTORY = 100;
     this.debugPanel = debugPanel;
+
+    this.debugPanel?.info(`New tab created with homepage: ${this.currentUrl}`);
   }
 
   async isUrl(input) {
-    if (!input || typeof input !== 'string') return false;
-    const trimmed = input.trim();
+    if (!input || typeof input !== 'string') {
+      this.debugPanel?.debug(`Invalid URL input: ${input}`); 
+      return false;
+    }
 
-    if (/\s/.test(trimmed)) return false;
+    const trimmed = input.trim();
+    if (/\s/.test(trimmed)) {
+      this.debugPanel?.debug(`URL contains whitespace: ${trimmed}`); 
+      return false;
+    }
 
     let host;
     try {
       const url = new URL(trimmed.includes('://') ? trimmed : 'https://' + trimmed);
-      host = url.hostname;
+      await dns.lookup(url.hostname);
+      this.debugPanel?.debug(`Valid URL: ${trimmed}`); 
+      return true;
     } catch {
-      return false;
-    }
-
-    try {
-      await dns.lookup(host);
-      return true; 
-    } catch {
+      this.debugPanel?.warn(`Invalid URL: ${trimmed} - ${err.message}`);
       return false;
     }
   }
@@ -45,7 +49,7 @@ export class Tab {
       }
 
       if (url === 'https://arungeorgesaji.is-a.dev/NeoBrowse/') {
-        console.log(chalk.blue('Navigating to homepage...'));
+        this.debugPanel?.info("Loading NeoBrowse homepage");
         const homepagePath = path.join(process.cwd(), 'index.html');
         const htmlContent = fs.readFileSync(homepagePath, 'utf8');
         const doc = parseHTML(htmlContent, this.debugPanel);
@@ -62,6 +66,7 @@ export class Tab {
       }
 
       if (options.historyIndex !== undefined) {
+        this.debugPanel?.debug(`Navigating to history index ${options.historyIndex}`);
         if (options.historyIndex >= 0 && options.historyIndex < this.history.length) {
           this.currentIndex = options.historyIndex;
           url = this.history[this.currentIndex];
@@ -69,6 +74,7 @@ export class Tab {
           throw new Error('Invalid history index');
         }
       } else if (url === 'back') {
+        this.debugPanel?.debug("Attempting to go back in history");
         if (this.currentIndex > 0) {
           this.currentIndex--;
           url = this.history[this.currentIndex];
@@ -76,6 +82,7 @@ export class Tab {
           return null; 
         }
       } else if (url === 'forward') {
+        this.debugPanel?.debug("Attempting to go forward in history");
         if (this.currentIndex < this.history.length - 1) {
           this.currentIndex++;
           url = this.history[this.currentIndex];
@@ -83,6 +90,7 @@ export class Tab {
           return null; 
         }
       } else if (url === 'reload') {
+        this.debugPanel?.info(`Reloading: ${this.currentUrl}`);
         if (!this.currentUrl) {
           throw new Error('No page to reload');
         }
@@ -91,15 +99,18 @@ export class Tab {
         url = this.resolveUrl(url);
 
         if (!(await this.isUrl(url))) {
+          this.debugPanel?.info(`Treating input as search query: ${url}`);
           const searchQuery = encodeURIComponent(url);
           url = `https://searx.be/search?q=${searchQuery}&format=html`;
         }
         
         if (!options.preserveHistory && this.currentIndex < this.history.length - 1) {
+          this.debugPanel?.debug(`Truncating history at index ${this.currentIndex}`);
           this.history = this.history.slice(0, this.currentIndex + 1);
         }
 
         if (!options.replaceHistory) {
+          this.debugPanel?.info(`Added to history: ${url}`);
           this.history.push(url);
           this.currentIndex = this.history.length - 1;
           
@@ -110,12 +121,13 @@ export class Tab {
         }
       }
 
-      console.log(chalk.blue(`Fetching ${url}...`));
+      this.debugPanel?.info(`Fetching: ${url}`);
       const html = await fetchHTML(url, this.debugPanel);
       const doc = parseHTML(html, this.debugPanel);
       
       this.currentUrl = url;
       this.currentDocument = doc;
+      this.debugPanel?.debug(`Parsed document with title: ${doc.title || 'Untitled'}`);
       
       return {
         document: doc,
@@ -126,7 +138,7 @@ export class Tab {
         historyLength: this.history.length
       };
     } catch (err) {
-      console.error(chalk.red('Navigation error:'), err.message);
+      this.debugPanel?.error(`Navigation failed: ${err.message}`, { url });
       throw err;
     }
   }
@@ -134,6 +146,7 @@ export class Tab {
   resolveUrl(url) {
     try {
       if (url.startsWith('/')) {
+        this.debugPanel?.debug(`Resolving relative URL: ${url}`);
         const baseUrl = new URL(this.currentUrl);
         return baseUrl.origin + url;
       }
@@ -144,22 +157,26 @@ export class Tab {
       }
       
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        this.debugPanel?.debug(`Adding https:// prefix to: ${url}`);
         return 'https://' + url;
       }
       
       return url;
     } catch (err) {
+      this.debugPanel?.warn(`URL resolution failed: ${err.message}`, { url });
       console.error(chalk.yellow('URL resolution error:'), err.message);
       return url;
     }
   }
 
   getHistoryState() {
-    return {
+    const state = {
       canGoBack: this.currentIndex > 0,
       canGoForward: this.currentIndex < this.history.length - 1,
       currentIndex: this.currentIndex,
       history: [...this.history]
     };
+    this.debugPanel?.debug(`Current history state`, state);
+    return state;
   }
 }

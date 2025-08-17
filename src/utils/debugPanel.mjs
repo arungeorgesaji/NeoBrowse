@@ -15,6 +15,8 @@ export class debugPanel {
     this.sessionStartTime = this.formatTime(new Date());
     this.logLevel = options.logLevel || LOG_LEVELS.INFO; 
     this.logFilter = options.logFilter || null;
+
+    this.info(`Initializing debug panel (log level: ${LOG_LEVEL_NAMES[this.logLevel]})`);
     
     if (!fs.existsSync(this.logFilePath)) {
       fs.writeFileSync(this.logFilePath, '');
@@ -40,7 +42,7 @@ export class debugPanel {
       hidden: options.startHidden !== false 
     });
 
-    this.log(`Session started at ${this.sessionStartTime}`, LOG_LEVELS.INFO);
+    this.info(`Session started at ${this.sessionStartTime}`, LOG_LEVELS.INFO);
 
     if (options.toggleKey) {
       bindKey(this.screen, [options.toggleKey], this.debugPanel, () => this.toggle());
@@ -54,8 +56,12 @@ export class debugPanel {
       bindKey(this.screen, [options.fullClearKey], this.debugPanel, () => this.fullClear());
     }
 
-    if (options.setLevelKey) {
-      bindKey(this.screen, [options.setLevelKey], this.debugPanel, () => this.showLogLevelSelector());
+    if (options.levelUpKey) {
+      bindKey(this.screen, [options.levelUpKey], () => this.adjustLogLevel(1));
+    }
+
+    if (options.levelDownKey) {
+      bindKey(this.screen, [options.levelDownKey], () => this.adjustLogLevel(-1));
     }
   }
 
@@ -76,6 +82,7 @@ export class debugPanel {
       const logContent = fs.readFileSync(this.logFilePath, 'utf-8');
       this.allLogsCount = logContent.split('\n').filter(line => line.trim()).length;
     } catch (err) {
+      this.error('Failed to load log count - resetting', { error: err.message });
       this.allLogsCount = 0;
       fs.writeFileSync(this.logFilePath, '');
     }
@@ -154,19 +161,27 @@ export class debugPanel {
     this.log(message, LOG_LEVELS.ERROR, metadata);
   }
 
-  setLogLevel(level) {
-    if (Object.values(LOG_LEVELS).includes(level)) {
-      this.logLevel = level;
+  adjustLogLevel(direction) {
+    const levels = Object.values(LOG_LEVELS).sort((a, b) => a - b);
+    const currentIndex = levels.indexOf(this.logLevel);
+    const newIndex = Math.max(0, Math.min(levels.length - 1, currentIndex + direction));
+    
+    if (newIndex !== currentIndex) {
+      const newLevel = levels[newIndex];
+      this.logLevel = newLevel;
+      this.info(`Log level changed from ${LOG_LEVEL_NAMES[this.logLevel]} to ${LOG_LEVEL_NAMES[newLevel]}`);
       this.refreshPanel();
-      this.info(`Log level set to ${LOG_LEVEL_NAMES[level]}`);
+    } else {
+      const limit = direction > 0 ? 'maximum' : 'minimum';
+      this.debug(`Already at ${limit} log level (${LOG_LEVEL_NAMES[this.logLevel]})`);
     }
   }
 
   setLogFilter(filter) {
     try {
       this.logFilter = filter ? new RegExp(filter, 'i') : null;
-      this.refreshPanel();
       this.info(`Log filter set to ${filter || 'none'}`);
+      this.refreshPanel();
     } catch (err) {
       this.error(`Invalid log filter: ${filter}`);
     }
@@ -214,8 +229,9 @@ export class debugPanel {
       const trimmedLines = allLines.slice(-this.maxFileLines);
       fs.writeFileSync(this.logFilePath, trimmedLines.join('\n'));
       this.allLogsCount = trimmedLines.length;
+      this.debug(`Trimmed log file to ${trimmedLines.length}/${this.maxFileLines} lines`);
     } catch (err) {
-      console.error('Error trimming log file:', err);
+      this.error('Failed to trim log file', { error: err.message });
     }
   }
 
@@ -268,11 +284,8 @@ export class debugPanel {
     this.allLogsCount = 0;
     this.clearedCount += count;
     fs.writeFileSync(this.logFilePath, '');
-    
-    if (!this.panel.hidden) {
-      this.refreshPanel();
-    }
-    this.log('Fully cleared all logs and file');
+    this.warn(`Cleared ALL logs (${count} session logs removed)`);
+    if (!this.panel.hidden) this.refreshPanel();
   }
 
   clearSessionLogs() {
@@ -286,7 +299,7 @@ export class debugPanel {
     this.allLogsCount++;
     
     this.refreshPanel();
-    this.log(`Cleared ${count} session logs`);
+    this.info(`Cleared ${count} session logs`);
   }
 
   destroy() {

@@ -3,4 +3,6 @@ Actually integrate settings
 Fix tables
 Add support for files
 
-Make scrollToFragment work on refresh
+Fix urlFragments
+Fix debugPanel
+Compartmentalize showWarnings

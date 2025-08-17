@@ -3,12 +3,18 @@ import sanitizeHtml from 'sanitize-html';
 
 export async function fetchHTML(url, debugPanel) {
   try {
+    const user_agent = 'Mozilla/5.0 (compatible; TUI-Browser/1.0)';
+    debugPanel?.info(`Fetching URL: ${url}`); 
+    debugPanel?.debug(`Using User-Agent: ${user_agent}`);
+
     const { data } = await axios.get(url, { 
       timeout: 10000,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TUI-Browser/1.0)' }
+      headers: { 'User-Agent': user_agent },
     });
+
+    debugPanel?.debug(`Received ${data.length} bytes from ${url}`);
     
-    return sanitizeHtml(data, { 
+    const sanitized = sanitizeHtml(data, { 
       allowedTags: ['h1', 'h2', 'h3', 'p', 'a', 'ul', 'li', 'strong', 'em', 'br', 'hr', 'title', 'q', 'i', 'b', 'div', 'header', 'footer', 'head', 'body', 'section', 'span', 'address', 'article', 'main', 'html', 'sup', 'sub', 'code', 'pre', 'blockquote', 'nav', 'samp', 'var', 'mark', 'time', 'kbd', 'del', 'ins', 'small', 'data', 'cite', 'abbr', 'dfn', 'dt', 'dd', 'table', 'thead', 'tbody', 'tfoot', 'th', 'td', 'tr'],
       allowedAttributes: {
         '*': ['id', 'name'],
@@ -16,7 +22,20 @@ export async function fetchHTML(url, debugPanel) {
       },
       disallowedTagsMode: 'discard'
     });
+
+    debugPanel?.debug(`Sanitized HTML to ${sanitized.length} bytes`); 
+    return sanitized;
   } catch (error) {
+    const errorType = error.response ? `HTTP ${error.response.status}` : error.code || 'Network';
+    const errorDetails = {
+      url,
+      errorType,
+      message: error.message,
+      ...(error.response && { status: error.response.status }),
+      ...(error.config && { timeout: error.config.timeout })
+    };
+
+    debugPanel?.error(`Fetch failed for ${url}`, errorDetails); 
     throw new Error(`Failed to fetch ${url}: ${error.message}`);
   }
 }

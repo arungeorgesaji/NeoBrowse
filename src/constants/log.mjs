@@ -18,3 +18,11 @@ export const LOG_COLORS = {
   [LOG_LEVELS.WARN]: 'yellow',
   [LOG_LEVELS.ERROR]: 'red'
 };
+
+export const LOG_KEY_BINDINGS = {
+  TOGGLE: 'C-d',
+  CLEAR: 'C-k',
+  FULL_CLEAR: 'C-f',
+  LEVEL_UP: 'C-]',  
+  LEVEL_DOWN: 'C-[' 
+};
