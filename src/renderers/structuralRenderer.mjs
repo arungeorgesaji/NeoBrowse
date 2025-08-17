@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-export function addStructuralSeparator(tagName, text) {
+export function addStructuralSeparator(tagName, text, debugPanel) {
   const boxWidth = Math.min(process.stdout.columns - 4, 60);
   const createBox = (label, content, color) => {
     const labelText = `── ${label} `;

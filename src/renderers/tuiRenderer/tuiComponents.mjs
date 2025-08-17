@@ -1,7 +1,7 @@
 import blessed from 'blessed';
 import chalk from 'chalk';
 
-export function createScreen(pageTitle) {
+export function createScreen(pageTitle, debugPanel) {
   return blessed.screen({
     smartCSR: true,
     title: `NeoBrowse - ${pageTitle}`,
@@ -13,7 +13,7 @@ export function createScreen(pageTitle) {
   });
 }
 
-export function createTabBar() {
+export function createTabBar(debugPanel) {
   return blessed.listbar({
     top: 1,
     height: 1,
@@ -32,7 +32,7 @@ export function createTabBar() {
   });
 }
 
-export function createContainer() {
+export function createContainer(debugPanel) {
   return blessed.box({
     top: 3, 
     width: '100%',
@@ -55,7 +55,7 @@ export function createContainer() {
   });
 } 
 
-export function createHeader(pageTitle) {
+export function createHeader(pageTitle, debugPanel) {
   return blessed.box({
     top: 0,
     height: 1,
@@ -69,7 +69,7 @@ export function createHeader(pageTitle) {
   });
 }
 
-export function createFooter() {
+export function createFooter(debugPanel) {
   return blessed.box({
     bottom: 0,
     height: 3,
@@ -87,7 +87,7 @@ export function createFooter() {
   });
 }
 
-export function createURLTextbox() {
+export function createURLTextbox(debugPanel) {
   return blessed.textbox({
     top: 'center',
     left: 'center',
@@ -104,7 +104,7 @@ export function createURLTextbox() {
   });
 }
 
-export function createSearchTextbox() {
+export function createSearchTextbox(debugPanel) {
   return blessed.textbox({
     top: 'center',
     left: 'center',

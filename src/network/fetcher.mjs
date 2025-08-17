@@ -1,7 +1,7 @@
 import axios from 'axios';
 import sanitizeHtml from 'sanitize-html';
 
-export async function fetchHTML(url) {
+export async function fetchHTML(url, debugPanel) {
   try {
     const { data } = await axios.get(url, { 
       timeout: 10000,

@@ -5,15 +5,17 @@ import chalk from 'chalk';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
 
 export class settingsManager {
-  constructor(browserInstance, screen) {
+  constructor(browserInstance, screen, debugPanel) {
     this.browser = browserInstance;
     this.screen = screen;
+    this.debugPanel = debugPanel;
     this.settings = {
       searchEngine: 'https://search.brave.com/search?q={query}&source=web',
       maxDepth: 30,
       maxNodes: 10000,
       timeout: 10000,
-      userAgent: 'Mozilla/5.0 (compatible; NeoBrowse/1.0)'
+      userAgent: 'Mozilla/5.0 (compatible; NeoBrowse/1.0)',
+      timeFormat: '24h'
     };
 
     this.searchEngines = {
@@ -163,7 +165,8 @@ export class settingsManager {
       `Max Depth: ${this.currentSettings.maxDepth}`,
       `Max Nodes: ${this.currentSettings.maxNodes}`,
       `Timeout: ${this.currentSettings.timeout}ms`,
-      `User Agent: ${this.currentSettings.userAgent.slice(0, 40)}...`
+      `User Agent: ${this.currentSettings.userAgent.slice(0, 40)}...`,
+      `Time Format: ${this.currentSettings.timeFormat === '24h' ? '24-hour' : '12-hour'}`
     ];
 
     this.settingsList.setItems(items);
@@ -188,9 +191,59 @@ export class settingsManager {
         this.showUserAgentSelector();
         break;
       case 5:
+        this.showTimeFormatSelector();
+        break;
+      case 6:
         this.showResetConfirmation();
         break;
     }
+  }
+
+  showTimeFormatSelector() {
+    const formats = {
+      '24-hour': '24h',
+      '12-hour': '12h'
+    };
+
+    let selectedIndex = this.currentSettings.timeFormat === '24h' ? 0 : 1;
+
+    const popup = blessed.list({
+      parent: this.overlay,
+      top: 'center',
+      left: 'center',
+      width: 30,
+      height: 6,
+      border: { type: 'line' },
+      style: {
+        border: { fg: 'yellow' },
+        item: { fg: 'white' },
+        selected: { bg: 'blue', fg: 'white' }
+      },
+      items: Object.keys(formats).map((format, i) => 
+        i === selectedIndex ? `> ${format}` : `  ${format}`
+      ),
+      keys: true,
+      mouse: true
+    });
+
+    popup.select(selectedIndex);
+
+    popup.on('select', (item, index) => {
+      const selectedFormat = Object.values(formats)[index];
+      this.currentSettings.timeFormat = selectedFormat;
+      popup.destroy();
+      this.updateSettingsDisplay();
+      this.settingsList.focus();
+    });
+
+    bindKey(popup, ['escape'], () => {
+      popup.destroy();
+      this.settingsList.focus();
+      this.browser.currentScreen.render();
+    });
+
+    popup.focus();
+    this.browser.currentScreen.render();
   }
 
   showUserAgentSelector() {
@@ -273,7 +326,7 @@ export class settingsManager {
       }
     });
 
-    popup.key(['escape'], () => {
+    bindKey(popup, ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -353,7 +406,7 @@ export class settingsManager {
       }
     });
 
-    popup.key(['escape'], () => {
+    bindKey(popup, ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -418,7 +471,7 @@ export class settingsManager {
       }
     });
 
-    input.key(['escape'], () => {
+    bindKey(input, ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -486,7 +539,7 @@ export class settingsManager {
       }
     });
 
-    input.key(['escape'], () => {
+    bindKey(input,input,  ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -574,13 +627,13 @@ export class settingsManager {
       this.settingsList.focus();
     });
 
-    popup.key(['escape'], () => {
+    bindKey(popup, ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
     });
 
-    yesButton.key(['right', 'left'], () => noButton.focus());
-    noButton.key(['left', 'right'], () => yesButton.focus());
+    bindKey(yesButton, ['right', 'left'], () => noButton.focus());
+    bindKey(noButton, ['left', 'right'], () => yesButton.focus());
 
     noButton.key(['enter'], () => {
       popup.destroy();
@@ -597,7 +650,8 @@ export class settingsManager {
       maxDepth: 30,
       maxNodes: 10000,
       timeout: 10000,
-      userAgent: 'Mozilla/5.0 (compatible; NeoBrowse/1.0)'
+      userAgent: 'Mozilla/5.0 (compatible; NeoBrowse/1.0)',
+      timeFormat: '24h'
     };
     
     this.settings = { ...this.currentSettings };
@@ -636,7 +690,7 @@ export class settingsManager {
       style: { fg: 'gray' }
     });
 
-    popup.key(['.', 'escape', 'enter', 'space', 'q'], () => {
+    bindKey(popup, ['.', 'escape', 'enter', 'space', 'q'], () => {
       popup.destroy();
       this.cleanup();
     });

@@ -2,9 +2,10 @@ import blessed from 'blessed';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
 
 export class historyManager {
-  constructor(browseInstance, screen) {
+  constructor(browseInstance, screen, debugPanel) {
     this.browse = browseInstance;
     this.screen = screen;
+    this.debugPanel = debugPanel
     this.overlay = null;
     this.historyList = null;
     this.closeCallback = null;

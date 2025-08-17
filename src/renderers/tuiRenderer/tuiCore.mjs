@@ -5,7 +5,7 @@ import { createScreen, createTabBar, createContainer, createHeader, createFooter
 import { setupHandlers} from './tuiHandlers.mjs';
 import { processContentWithLinks } from './tuiUtils.mjs';
 
-export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
+export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debugPanel) {
   try {
     if (global.currentScreen) {
       try {

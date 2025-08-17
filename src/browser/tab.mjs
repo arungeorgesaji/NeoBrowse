@@ -6,13 +6,14 @@ import fs from 'fs';
 import path from 'path';
 
 export class Tab {
-  constructor() {
+  constructor(debugPanel) {
     this.history = []; 
     this.currentIndex = -1; 
     this.currentUrl = 'https://arungeorgesaji.is-a.dev/NeoBrowse/';
     this.currentDocument = null;
     this.active = false;
     this.MAX_HISTORY = 100;
+    this.debugPanel = debugPanel;
   }
 
   async isUrl(input) {

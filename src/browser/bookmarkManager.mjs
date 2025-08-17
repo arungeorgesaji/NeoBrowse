@@ -10,9 +10,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export class bookmarkManager {
-  constructor(browserInstance, screen) {
+  constructor(browserInstance, screen, debugPanel) {
     this.browser = browserInstance;
     this.screen = screen;
+    this.debugPanel = debugPanel;
     this.bookmarks = [];
     this.overlay = null;
     this.loadBookmarks();

@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { extractText } from '../utils/domHelpers.mjs';
 
-export function calculateColumnWidths(rows) {
+export function calculateColumnWidths(rows, debugPanel) {
   const widths = [];
   rows.forEach(row => {
     row.forEach((cell, i) => {
@@ -11,7 +11,7 @@ export function calculateColumnWidths(rows) {
   return widths;
 }
 
-export function renderTable(node) {
+export function renderTable(node, debugPanel) {
   const rows = [];
   
   const rowsElements = node.querySelectorAll('tr');

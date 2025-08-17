@@ -4,15 +4,14 @@ import { bookmarkManager } from './bookmarkManager.mjs';
 import { settingsManager } from './settingsManager.mjs';
 import { renderTUI } from '../renderers/tuiRenderer/tuiCore.mjs';
 import { scrollToFragment, getFragment } from '../renderers/tuiRenderer/tuiUtils.mjs'
-import { debugPanel } from '../utils/debugPanel.mjs';
 import chalk from 'chalk';
 import blessed from 'blessed';
 
 export class neoBrowse {
-  constructor() {
+  constructor(screen, debugPanel) {
     this.tabs = [];
     this.activeTabIndex = -1;
-    this.currentScreen = null;
+    this.currentScreen = screen;
     this.contentContainer = null;
     this.warningTimeout = null;
     this.originalFooterContent = null;
@@ -20,7 +19,7 @@ export class neoBrowse {
     this.historyManager = null;
     this.settingsManager = null;
     this.isModalOpen = false;
-    this.debugPanel = null;
+    this.debugPanel = debugPanel;
 
     this.initEventHandlers();
   }
@@ -28,9 +27,9 @@ export class neoBrowse {
   initManagers() {
     if (!this.currentScreen) return;
     
-    this.bookmarkManager = new bookmarkManager(this, this.currentScreen);
-    this.historyManager = new historyManager(this, this.currentScreen);
-    this.settingsManager = new settingsManager(this, this.currentScreen);
+    this.bookmarkManager = new bookmarkManager(this, this.currentScreen, this.debugPanel);
+    this.historyManager = new historyManager(this, this.currentScreen, this.debugPanel);
+    this.settingsManager = new settingsManager(this, this.currentScreen, this.debugPanel);
   }
 
   get activeTab() {
@@ -106,7 +105,7 @@ export class neoBrowse {
   }
 
   async newTab(url = 'https://arungeorgesaji.is-a.dev/NeoBrowse/') {
-    const newTab = new Tab();
+    const newTab = new Tab(this.debugPanel);
     this.tabs.push(newTab);
     this.tabs.forEach(tab => tab.active = false);
     newTab.active = true;
@@ -207,7 +206,7 @@ export class neoBrowse {
       this.currentScreen.destroy();
     }
 
-    const fragment = getFragment(tabData.url); 
+    const fragment = getFragment(tabData.url, this.debugPanel); 
 
     const { screen, container } = renderTUI(
       tabData.document,
@@ -236,16 +235,12 @@ export class neoBrowse {
       scrollToFragment(fragment, container, screen, this.debugPanel);
     }
 
-    if (!this.debugPanel) {
-      this.debugPanel = new debugPanel(this.currentScreen, {
-        toggleKey: 'C-d', 
-        clearKey: 'C-l',
-        maxLines: 100,
-        startHidden: true
-      });
-      this.debugPanel.log('Application initialized');
-    } else {
+    if (this.debugPanel) {
       this.debugPanel.panel.parent = this.currentScreen;
+      if (!this.debugPanel.initialized) {
+        this.debugPanel.log('Application initialized');
+        this.debugPanel.initialized = true;
+      }
     }
 
     this.initManagers();

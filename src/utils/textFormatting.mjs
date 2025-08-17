@@ -3,15 +3,15 @@ import { addStructuralSeparator } from '../renderers/structuralRenderer.mjs';
 import { state } from '../constants/state.mjs';
 import chalk from 'chalk';
 
-export function toSuperScript(text) {
+export function toSuperScript(text, debugPanel) {
   return text.split('').map(c => superScriptMap[c] || c).join('');
 }
 
-export function toSubScript(text) {
+export function toSubScript(text, debugPanel) {
   return text.split('').map(c => subScriptMap[c] || c).join('');
 }
 
-function collectFragments(node) {
+function collectFragments(node, debugPanel) {
   const fragments = new Set();
   
   function traverse(element) {
@@ -35,14 +35,14 @@ function collectFragments(node) {
   return fragments;
 }
 
-function initializeFragments(rootNode, context) {
+function initializeFragments(rootNode, context, debugPanel) {
   context.fragmentTargets = collectFragments(rootNode);
 }
 
 const elementPositions = new Map();
 let currentLine = 0;
 
-export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', context = {}) {
+export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', context = {}, debugPanel) {
   if (!text.trim()) return '';
 
   const elementId = node?.getAttribute('id') || node?.getAttribute('name');

@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-export function processContentWithLinks(content) {
+export function processContentWithLinks(content, debugPanel) {
   const links = [];
   let linkId = 0;
   
@@ -15,7 +15,7 @@ export function processContentWithLinks(content) {
   return { processedContent, links };
 }
 
-export function highlightFocusedLink(content, links, index, container, screen) {
+export function highlightFocusedLink(content, links, index, container, screen, debugPanel) {
   let newContent = content.replace(
       /\{underline\}\{bold\}\{magenta-fg\}\[(\d+)\](.*?)\{\/magenta-fg\}\{\/bold\}\{\/underline\}/g,
       '{underline}{cyan-fg}[$1]$2{/cyan-fg}{/underline}'
@@ -38,7 +38,7 @@ export function highlightFocusedLink(content, links, index, container, screen) {
   screen.render();
 }
 
-export function scrollToLink(links, linkIndex, container, screen) {
+export function scrollToLink(links, linkIndex, container, screen, debugPanel) {
   if (linkIndex < 0 || linkIndex >= links.length) return;
   
   const link = links[linkIndex];
@@ -90,7 +90,7 @@ export function scrollToFragment(fragment, container, screen,debugPanel, padding
   }
 }
 
-function calculateLineNumber(textBeforeLink, containerWidth) {
+function calculateLineNumber(textBeforeLink, containerWidth, debugPanel) {
   let lineNumber = 0;
   let currentLineLength = 0;
   
@@ -138,6 +138,6 @@ function scrollToElement(element, container, screen, padding = 2) {
   screen.render();
 }
 
-export function getFragment(url) {
+export function getFragment(url, debugPanel) {
   return url?.match(/#([^#]*)$/)?.[1] ?? null;
 }

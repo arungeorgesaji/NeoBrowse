@@ -1,6 +1,6 @@
 import { highlightFocusedLink, scrollToLink } from './tuiUtils.mjs';
 
-export function bindKey(element, keys, handler) {
+export function bindKey(element, keys, handler, debugPanel) {
   if (!element || typeof element.key !== 'function') {
     console.warn('bindKey: element must have a .key() method');
     return;
@@ -26,6 +26,7 @@ export function setupHandlers({
   links,
   updateTabItems,
   content,
+  debugPanel,
 }) {
   let focusedLinkIndex = -1;
 

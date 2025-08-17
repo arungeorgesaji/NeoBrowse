@@ -3,7 +3,7 @@ import { formatTextByTag } from './textFormatting.mjs';
 
 const nodeCache = new WeakMap();
 
-export function extractText(node, depth = 0, baseUrl = '', context = {}) {
+export function extractText(node, depth = 0, baseUrl = '', context = {}, debugPanel) {
   if (depth === 0) {
     context = {
       seenNodes: new Set(),
