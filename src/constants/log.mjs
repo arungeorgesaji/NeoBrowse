@@ -23,6 +23,6 @@ export const LOG_KEY_BINDINGS = {
   TOGGLE: 'C-d',
   CLEAR: 'C-k',
   FULL_CLEAR: 'C-f',
-  LEVEL_UP: 'C-]',  
-  LEVEL_DOWN: 'C-[' 
+  LEVEL_UP: 'M-j',  
+  LEVEL_DOWN: 'M-k' 
 };

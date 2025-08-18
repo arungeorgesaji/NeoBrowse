@@ -100,6 +100,31 @@ class logger {
     this.log(message, LOG_LEVELS.ERROR, metadata);
   }
 
+  adjustLogLevel(delta) {
+    const logLevelValues = Object.values(LOG_LEVELS).sort((a, b) => a - b);
+    const currentIndex = logLevelValues.indexOf(this.logLevel);
+    const newIndex = Math.max(0, Math.min(logLevelValues.length - 1, currentIndex + delta));
+    const newLevel = logLevelValues[newIndex];
+    
+    if (newLevel !== this.logLevel) {
+      const oldLevelName = LOG_LEVEL_NAMES[this.logLevel];
+      this.logLevel = newLevel;
+      const newLevelName = LOG_LEVEL_NAMES[this.logLevel];
+      this.info(`Log level changed from ${oldLevelName} to ${newLevelName}`);
+    }
+  }
+
+  setLogLevel(level) {
+    if (Object.values(LOG_LEVELS).includes(level)) {
+      const oldLevelName = LOG_LEVEL_NAMES[this.logLevel];
+      this.logLevel = level;
+      const newLevelName = LOG_LEVEL_NAMES[this.logLevel];
+      this.info(`Log level set to ${newLevelName} (was ${oldLevelName})`);
+    } else {
+      this.error(`Invalid log level: ${level}`);
+    }
+  }
+
   setLogFilter(filter) {
     try {
       this.logFilter = filter ? new RegExp(filter, 'i') : null;
