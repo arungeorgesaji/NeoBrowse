@@ -5,7 +5,7 @@ import { LOG_LEVELS, LOG_LEVEL_NAMES, LOG_COLORS } from '../constants/log.mjs';
 
 let instance = null;
 
-class Logger {
+class logger {
   constructor(options = {}) {
     if (instance) {
       return instance;
@@ -151,7 +151,7 @@ class Logger {
 
 export function getLogger(options) {
   if (!instance) {
-    instance = new Logger(options);
+    instance = new logger(options);
   }
   return instance;
 }

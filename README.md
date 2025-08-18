@@ -1,15 +1,18 @@
-# NeoBrowse - Terminal Web Browser 
+# NeoBrowse - TUI Web Browser 
 ![NeoBrowse Screenshot](screenshot.png) 
 
-A lightweight, web browser for the terminal, built with Node.js and Blessed.
+A powerful terminal-based browser with a TUI interface, built with Node.js and Blessed.
 
 ## Features
-- Terminal-native interface with keyboard navigation
+- TUI interface with keyboard navigation
 - Fast rendering of simplified HTML content
+- Multiple tabs support
+- Integrated URL/search bar (Even supports urlFragments and files)
 - Bookmarks management
 - Browsing history
-- Multiple tabs support
-- Integrated URL/search bar
+- Customizable settings
+- Advanced inbuilt debugger and warnings system 
+- More advanced features coming soon!
 
 ## Quick Start (Recommended)
 

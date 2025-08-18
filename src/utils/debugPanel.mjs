@@ -1,10 +1,10 @@
 import blessed from 'blessed';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs';
-import { LOG_LEVELS, LOG_LEVEL_NAMES, LOG_COLORS } from '../constants/log.mjs';
+import { LOG_LEVELS, LOG_LEVEL_NAMES, LOG_COLORS, LOG_KEY_BINDINGS } from '../constants/log.mjs';
 import chalk from 'chalk';
 import { getLogger } from './logger.mjs';
 
-export class DebugPanel {
+export class debugPanel {
   constructor(screen, options = {}) {
     this.screen = screen;
     this.logger = getLogger();
@@ -27,37 +27,27 @@ export class DebugPanel {
       hidden: options.startHidden !== false 
     });
 
-    if (options.toggleKey) {
-      bindKey(this.screen, [options.toggleKey], () => this.toggle());
-    }
+    bindKey(this.screen, [LOG_KEY_BINDINGS.TOGGLE], () => this.toggle());
 
-    if (options.clearKey) {
-      bindKey(this.screen, [options.clearKey], () => {
-        this.logger.clearVisible();
-        this.refreshPanel();
-      });
-    }
+    bindKey(this.screen, [LOG_KEY_BINDINGS.CLEAR], () => {
+      this.logger.clearVisible();
+      this.refreshPanel();
+    });
 
-    if (options.fullClearKey) {
-      bindKey(this.screen, [options.fullClearKey], () => {
-        this.logger.fullClear();
-        this.refreshPanel();
-      });
-    }
+    bindKey(this.screen, [LOG_KEY_BINDINGS.FULL_CLEAR], () => {
+      this.logger.fullClear();
+      this.refreshPanel();
+    });
 
-    if (options.levelUpKey) {
-      bindKey(this.screen, [options.levelUpKey], () => {
-        this.logger.adjustLogLevel(1);
-        this.refreshPanel();
-      });
-    }
+    bindKey(this.screen, [LOG_KEY_BINDINGS.LEVEL_UP], () => {
+      this.logger.adjustLogLevel(1);
+      this.refreshPanel();
+    });
 
-    if (options.levelDownKey) {
-      bindKey(this.screen, [options.levelDownKey], () => {
-        this.logger.adjustLogLevel(-1);
-        this.refreshPanel();
-      });
-    }
+    bindKey(this.screen, [LOG_KEY_BINDINGS.LEVEL_DOWN], () => {
+      this.logger.adjustLogLevel(-1);
+      this.refreshPanel();
+    });
   }
 
   getVisibleLogs() {
@@ -111,6 +101,7 @@ export class DebugPanel {
 
   show() {
     this.panel.hidden = false;
+    this.panel.setFront();
     this.refreshPanel();
   }
 

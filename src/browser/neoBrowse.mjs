@@ -6,6 +6,7 @@ import { settingsManager } from './settingsManager.mjs';
 import { renderTUI } from '../renderers/tuiRenderer/tuiCore.mjs';
 import { scrollToFragment, getFragment } from '../renderers/tuiRenderer/tuiUtils.mjs'
 import { getLogger } from '../utils/logger.mjs'; 
+import { debugPanel } from '../utils/debugPanel.mjs'; 
 import chalk from 'chalk';
 import blessed from 'blessed';
 
@@ -13,7 +14,7 @@ export class neoBrowse {
   constructor() {
     this.tabs = [];
     this.activeTabIndex = -1;
-    this.currentScreen = null;
+    this.currentScreen = blessed.screen({ smartCSR: true });
     this.contentContainer = null;
     this.warningTimeout = null;
     this.originalFooterContent = null;
@@ -22,6 +23,7 @@ export class neoBrowse {
     this.settingsManager = null;
     this.isModalOpen = false;
     this.logger = getLogger();
+    this.debugPanel = new debugPanel(this.currentScreen);
 
     this.initManagers();
     this.initEventHandlers();
@@ -233,6 +235,8 @@ export class neoBrowse {
   refreshUI(tabData) {
     this.logger?.debug("Refreshing UI with new tab data");
 
+    const wasDebugPanelVisible = this.debugPanel?.panel.hidden === false;
+
     if (this.currentScreen) {
       this.currentScreen.destroy();
     }
@@ -262,6 +266,12 @@ export class neoBrowse {
 
     this.currentScreen = screen;
     this.contentContainer = container;
+
+    this.debugPanel = new debugPanel(this.currentScreen);
+
+    if (wasDebugPanelVisible) {
+      this.debugPanel.show();
+    }
 
     this.bookmarkManager = new bookmarkManager(this, this.currentScreen);
     this.historyManager = new historyManager(this, this.currentScreen);

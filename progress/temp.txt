@@ -4,7 +4,8 @@ Fix tables
 Add support for files
 
 Fix urlFragments
-Fix debugPanel
 Compartmentalize showWarnings
 
-Make it access the callstack and find the file being run in logger
+make debugPanel always come to front even when b,h or s is opened
+Fix debugPanel keyHandlers
+
