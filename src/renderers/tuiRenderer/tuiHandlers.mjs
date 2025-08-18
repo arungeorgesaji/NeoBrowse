@@ -1,8 +1,11 @@
 import { highlightFocusedLink, scrollToLink } from './tuiUtils.mjs';
+import { getLogger } from '../../utils/logger.mjs'; 
 
-export function bindKey(element, keys, debugPanel, handler) {
+export function bindKey(element, keys, handler) {
+  const logger = getLogger();
+
   if (!element || typeof element.key !== 'function') {
-    debugPanel?.warn('bindKey: element must have a .key() method', {
+    logger?.warn('bindKey: element must have a .key() method', {
       elementType: typeof element,
       hasKeyMethod: typeof element.key
     });
@@ -16,7 +19,7 @@ export function bindKey(element, keys, debugPanel, handler) {
     return [key]; 
   });
   
-  debugPanel?.trace('Binding keys', {
+  logger?.debug('Binding keys', {
     originalKeys: keys,
     blessedKeys,
     handler: handler.name || 'anonymous'
@@ -35,9 +38,10 @@ export function setupHandlers({
   links,
   updateTabItems,
   content,
-  debugPanel,
 }) {
-  debugPanel?.info('Setting up keyboard handlers', {
+  const logger = getLogger();
+
+  logger?.info('Setting up keyboard handlers', {
     hasOnNavigate: !!onNavigate,
     tabCount: tabOptions?.tabs?.length || 0,
     linkCount: links?.length || 0
@@ -45,26 +49,26 @@ export function setupHandlers({
 
   let focusedLinkIndex = -1;
 
-  bindKey(screen, ['q', 'C-c'], debugPanel, () => {
-    debugPanel?.info('Quit command received');
+  bindKey(screen, ['q', 'C-c'], () => {
+    logger?.info('Quit command received');
     screen.destroy();
     process.exit(0);
   });
   
-  bindKey(screen, ['n'], debugPanel, () => {
-    debugPanel?.debug('URL input triggered');
+  bindKey(screen, ['n'], () => {
+    logger?.debug('URL input triggered');
     urlInput.show();
     urlInput.focus();
     urlInput.readInput((err, value) => {
       urlInput.hide();
       container.focus();
       if (value && onNavigate) {
-        debugPanel?.info('Navigating to URL', {
+        logger?.info('Navigating to URL', {
           url: value.substring(0, 100) + (value.length > 100 ? '...' : '')
         });
         onNavigate(value);
       } else if (err) {
-        debugPanel?.error('URL input error', {
+        logger?.error('URL input error', {
           error: err.message
         });
       }
@@ -72,37 +76,37 @@ export function setupHandlers({
     });
   });
 
-  bindKey(screen, ['b'], debugPanel, () => {
-    debugPanel?.debug('Back navigation triggered');
+  bindKey(screen, ['b'], () => {
+    logger?.debug('Back navigation triggered');
     onNavigate('back');
   });
 
-  bindKey(screen, ['f'], debugPanel, () => {
-    debugPanel?.debug('Forward navigation triggered');
+  bindKey(screen, ['f'], () => {
+    logger?.debug('Forward navigation triggered');
     onNavigate('forward');
   });
 
-  bindKey(screen, ['r'], debugPanel, () => {
-    debugPanel?.debug('Reload triggered');
+  bindKey(screen, ['r'], () => {
+    logger?.debug('Reload triggered');
     onNavigate('reload');
   });
 
-  bindKey(screen, ['h'], debugPanel, () => {
-    debugPanel?.debug('History command triggered');
+  bindKey(screen, ['h'], () => {
+    logger?.debug('History command triggered');
     if (tabOptions.onShowHistory) {
       tabOptions.onShowHistory();
     }
   });
 
-  bindKey(screen, ['m'], debugPanel, () => {
-    debugPanel?.debug('Bookmarks command triggered');
+  bindKey(screen, ['m'], () => {
+    logger?.debug('Bookmarks command triggered');
     if (tabOptions.onShowBookmarks) {
       tabOptions.onShowBookmarks();
     }
   });
 
-  bindKey(screen, ['s'], debugPanel, () => {
-    debugPanel?.debug('Search input triggered');
+  bindKey(screen, ['s'], () => {
+    logger?.debug('Search input triggered');
     searchInput.show();
     searchInput.focus();
     searchInput.readInput((err, value) => {
@@ -110,12 +114,12 @@ export function setupHandlers({
       container.focus();
       if (value) {
         const searchQuery = encodeURIComponent(value);
-        debugPanel?.info('Searching', {
+        logger?.info('Searching', {
           query: value.substring(0, 50) + (value.length > 50 ? '...' : '')
         });
         onNavigate(`https://searx.be/search?q=${searchQuery}&format=html`);
       } else if (err) {
-        debugPanel?.error('Search input error', {
+        logger?.error('Search input error', {
           error: err.message
         });
       }
@@ -123,41 +127,41 @@ export function setupHandlers({
     });
   });
 
-  bindKey(screen, ['M-s'], debugPanel, () => {
-    debugPanel?.debug('Settings command triggered');
+  bindKey(screen, ['M-s'], () => {
+    logger?.debug('Settings command triggered');
     if (tabOptions.onShowSettings) {
       tabOptions.onShowSettings();
     }
   });
 
-  bindKey(screen, ['t'], debugPanel, () => {
-    debugPanel?.debug('New tab command triggered');
+  bindKey(screen, ['t'], () => {
+    logger?.debug('New tab command triggered');
     if (tabOptions.onNewTab) {
       tabOptions.onNewTab();
       updateTabItems();
       screen.render();
-      debugPanel?.trace('New tab created and UI updated');
+      logger?.debug('New tab created and UI updated');
     }
   });
 
-  bindKey(screen, ['w'], debugPanel, () => {
-    debugPanel?.debug('Close tab command triggered');
+  bindKey(screen, ['w'], () => {
+    logger?.debug('Close tab command triggered');
     if (tabOptions.onCloseTab) {
       tabOptions.onCloseTab();
       updateTabItems();
       screen.render();
-      debugPanel?.trace('Tab closed and UI updated');
+      logger?.debug('Tab closed and UI updated');
     }
   });
 
-  bindKey(screen, ['tab'], debugPanel, () => {
-    debugPanel?.debug('Switch tab command triggered');
+  bindKey(screen, ['tab'], () => {
+    logger?.debug('Switch tab command triggered');
     if (tabOptions.onSwitchTab) {
       const tabs = tabOptions.tabs || [];
       if (tabs.length > 1) {
         const currentIndex = tabs.findIndex(tab => tab.active);
         const nextIndex = (currentIndex + 1) % tabs.length;
-        debugPanel?.trace('Switching tabs', {
+        logger?.debug('Switching tabs', {
           fromTab: currentIndex,
           toTab: nextIndex
         });
@@ -165,16 +169,16 @@ export function setupHandlers({
         updateTabItems();
         screen.render();
       } else {
-        debugPanel?.trace('No other tabs to switch to');
+        logger?.debug('No other tabs to switch to');
       }
     }
   });
 
   for (let i = 0; i < 9; i++) {
-    bindKey(screen, [`${i + 1}`], debugPanel, () => {  
-      debugPanel?.debug(`Tab ${i + 1} shortcut triggered`);
+    bindKey(screen, [`${i + 1}`], () => {  
+      logger?.debug(`Tab ${i + 1} shortcut triggered`);
       if (tabOptions.onSwitchTab && i < tabOptions.tabs?.length) {
-        debugPanel?.trace(`Switching to tab ${i}`);
+        logger?.debug(`Switching to tab ${i}`);
         tabOptions.onSwitchTab(i);
         updateTabItems();
         screen.render();
@@ -182,56 +186,56 @@ export function setupHandlers({
     });
   }
 
-  bindKey(screen, ['k', 'right'], debugPanel, () => {
+  bindKey(screen, ['k', 'right'], () => {
     if (links.length === 0) {
-      debugPanel?.trace('No links available for navigation');
+      logger?.debug('No links available for navigation');
       return;
     }
     
     focusedLinkIndex = (focusedLinkIndex + 1) % links.length;
-    debugPanel?.trace('Navigating to next link', {
+    logger?.debug('Navigating to next link', {
       linkIndex: focusedLinkIndex,
       linkText: links[focusedLinkIndex].text.substring(0, 50) + (links[focusedLinkIndex].text.length > 50 ? '...' : ''),
       linkUrl: links[focusedLinkIndex].url
     });
-    highlightFocusedLink(content, links, focusedLinkIndex, container, screen, debugPanel);
-    scrollToLink(links, focusedLinkIndex, container, screen, debugPanel);
+    highlightFocusedLink(content, links, focusedLinkIndex, container, screen);
+    scrollToLink(links, focusedLinkIndex, container, screen);
   });
 
-  bindKey(screen, ['j', 'left'], debugPanel, () => {
+  bindKey(screen, ['j', 'left'], () => {
     if (links.length === 0) {
-      debugPanel?.trace('No links available for navigation');
+      logger?.debug('No links available for navigation');
       return;
     }
     
     focusedLinkIndex = (focusedLinkIndex - 1 + links.length) % links.length;
-    debugPanel?.trace('Navigating to previous link', {
+    logger?.debug('Navigating to previous link', {
       linkIndex: focusedLinkIndex,
       linkText: links[focusedLinkIndex].text.substring(0, 50) + (links[focusedLinkIndex].text.length > 50 ? '...' : ''),
       linkUrl: links[focusedLinkIndex].url
     });
-    highlightFocusedLink(content, links, focusedLinkIndex, container, screen, debugPanel);
-    scrollToLink(links, focusedLinkIndex, container, screen, debugPanel);
+    highlightFocusedLink(content, links, focusedLinkIndex, container, screen);
+    scrollToLink(links, focusedLinkIndex, container, screen);
   });
 
-  bindKey(screen, ['enter'], debugPanel, () => {
+  bindKey(screen, ['enter'], () => {
     if (focusedLinkIndex >= 0 && focusedLinkIndex < links.length) {
       const link = links[focusedLinkIndex];
-      debugPanel?.info('Following link', {
+      logger?.info('Following link', {
         index: focusedLinkIndex,
         text: link.text.substring(0, 50) + (link.text.length > 50 ? '...' : ''),
         url: link.url
       });
       onNavigate(link.url);
     } else {
-      debugPanel?.debug('Enter pressed but no valid link focused', {
+      logger?.debug('Enter pressed but no valid link focused', {
         focusedLinkIndex
       });
     }
   });
 
-  bindKey(screen, ['up', 'down'], debugPanel, (ch, key) => {
-    debugPanel?.trace('Scrolling', {
+  bindKey(screen, ['up', 'down'], (ch, key) => {
+    logger?.debug('Scrolling', {
       direction: key.name,
       lines: 1
     });
@@ -239,9 +243,9 @@ export function setupHandlers({
     screen.render();
   });
 
-  bindKey(screen, ['pageup', 'pagedown'], debugPanel, (ch, key) => {
+  bindKey(screen, ['pageup', 'pagedown'], (ch, key) => {
     const scrollAmount = Math.floor(container.height / 2);
-    debugPanel?.trace('Page scrolling', {
+    logger?.debug('Page scrolling', {
       direction: key.name,
       amount: scrollAmount
     });
@@ -249,9 +253,9 @@ export function setupHandlers({
     screen.render();
   });
 
-  bindKey(screen, ['space'], debugPanel, () => {
+  bindKey(screen, ['space'], () => {
     const scrollAmount = container.height;
-    debugPanel?.trace('Space scrolling', {
+    logger?.debug('Space scrolling', {
       direction: 'down',
       amount: scrollAmount
     });
@@ -259,9 +263,9 @@ export function setupHandlers({
     screen.render();
   });
 
-  bindKey(screen, ['M-space'], debugPanel, () => {
+  bindKey(screen, ['M-space'], () => {
     const scrollAmount = container.height;
-    debugPanel?.trace('Meta-space scrolling', {
+    logger?.debug('Meta-space scrolling', {
       direction: 'up',
       amount: scrollAmount
     });
@@ -269,43 +273,43 @@ export function setupHandlers({
     screen.render();
   });
 
-  bindKey(screen, ['home', 'g'], debugPanel, () => {
-    debugPanel?.trace('Scrolling to top');
+  bindKey(screen, ['home', 'g'], () => {
+    logger?.debug('Scrolling to top');
     container.scrollTo(0);
     screen.render();
   });
 
-  bindKey(screen, ['end', 'M-g'], debugPanel, () => {
-    debugPanel?.trace('Scrolling to bottom');
+  bindKey(screen, ['end', 'M-g'], () => {
+    logger?.debug('Scrolling to bottom');
     container.scrollTo(Infinity); 
     screen.render();
   });
 
-  bindKey(screen, ['d'], debugPanel, () => {
+  bindKey(screen, ['d'], () => {
     const scrollAmount = Math.floor(container.height / 2);
-    debugPanel?.trace('Half-page scrolling down', { amount: scrollAmount });
+    logger?.debug('Half-page scrolling down', { amount: scrollAmount });
     container.scroll(scrollAmount);
     screen.render();
   });
 
-  bindKey(screen, ['u'], debugPanel, () => {
+  bindKey(screen, ['u'], () => {
     const scrollAmount = Math.floor(container.height / 2);
-    debugPanel?.trace('Half-page scrolling up', { amount: scrollAmount });
+    logger?.debug('Half-page scrolling up', { amount: scrollAmount });
     container.scroll(-scrollAmount);
     screen.render();
   });
 
   container.on('wheeldown', () => {
-    debugPanel?.trace('Mouse wheel down');
+    logger?.debug('Mouse wheel down');
     container.scroll(1);
     screen.render();
   });
 
   container.on('wheelup', () => {
-    debugPanel?.trace('Mouse wheel up');
+    logger?.debug('Mouse wheel up');
     container.scroll(-1);
     screen.render();
   });
 
-  debugPanel?.info('Keyboard handlers setup complete');
+  logger?.info('Keyboard handlers setup complete');
 }

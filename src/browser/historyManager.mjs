@@ -1,16 +1,17 @@
 import blessed from 'blessed';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
+import { getLogger } from '../utils/logger.mjs'; 
 
 export class historyManager {
-  constructor(browseInstance, screen, debugPanel) {
+  constructor(browseInstance, screen) {
     this.browse = browseInstance;
     this.screen = screen;
-    this.debugPanel = debugPanel
+    this.logger = getLogger();
     this.overlay = null;
     this.historyList = null;
     this.closeCallback = null;
 
-    this.debugPanel?.info("History manager initialized");
+    this.logger?.info("History manager initialized");
   }
   
   showHistory(closeCallback) {
@@ -19,20 +20,20 @@ export class historyManager {
       const tab = this.browse.activeTab;
 
       if (!tab?.history) {
-        this.debugPanel?.warn("No tab or history available"); 
+        this.logger?.warn("No tab or history available"); 
         this.browse.showWarning("No history available");
         if (this.closeCallback) this.closeCallback();
         return;
       }
     
       if (tab.history.length === 0) {
-        this.debugPanel?.debug("Empty history for current tab"); 
+        this.logger?.debug("Empty history for current tab"); 
         this.browse.showWarning("No history available");
         if (this.closeCallback) this.closeCallback();
         return;
       }
 
-      this.debugPanel?.info(`Displaying history (${tab.history.length} items)`);
+      this.logger?.info(`Displaying history (${tab.history.length} items)`);
       
       this.overlay = blessed.box({
         parent: this.screen,
@@ -44,7 +45,7 @@ export class historyManager {
         tags: true
       });
 
-      this.debugPanel?.debug("Created history overlay");
+      this.logger?.debug("Created history overlay");
       
       this.historyList = blessed.list({
         parent: this.overlay,
@@ -74,7 +75,7 @@ export class historyManager {
         }
       });
 
-      this.debugPanel?.debug(`Populated history list with ${tab.history.length} items`);
+      this.logger?.debug(`Populated history list with ${tab.history.length} items`);
 
       blessed.text({
         parent: this.overlay,
@@ -93,14 +94,14 @@ export class historyManager {
       });
       
       const handleSelect = async (item, index) => {
-        this.debugPanel?.debug(`Selected history item ${index}: ${tab.history[index]}`);
+        this.logger?.debug(`Selected history item ${index}: ${tab.history[index]}`);
 
         try {
           this.cleanup();
           const tab = this.browse.activeTab;
 
           if (index === tab.currentIndex) {
-            this.debugPanel?.debug("Selected current page in history");
+            this.logger?.debug("Selected current page in history");
             this.browse.showWarning("You're already on this page!");
             return;
           }
@@ -110,7 +111,7 @@ export class historyManager {
             replaceHistory: true
           });
 
-          this.debugPanel?.info(`Navigated to history item ${index}`);
+          this.logger?.info(`Navigated to history item ${index}`);
  
           this.browse.refreshUI({
             document: tab.currentDocument,
@@ -118,7 +119,7 @@ export class historyManager {
             title: tab.currentDocument?.title || tab.currentUrl || 'New Tab'
           });
         } catch (err) {
-          this.debugPanel?.error(`History navigation failed: ${err.message}`, { 
+          this.logger?.error(`History navigation failed: ${err.message}`, { 
             index,
             url: tab.history[index]
           });
@@ -127,12 +128,12 @@ export class historyManager {
       };
       
       const handleClose = () => {
-        this.debugPanel?.debug("History modal closed by user");
+        this.logger?.debug("History modal closed by user");
         this.cleanup();
       };
       
       this.historyList.on('select', handleSelect);
-      bindKey(this.screen, ['escape'], this.debugPanel, handleClose);
+      bindKey(this.screen, ['escape'], handleClose);
 
       if (tab.currentIndex >= 0) {
         this.historyList.scrollTo(tab.currentIndex);
@@ -142,7 +143,7 @@ export class historyManager {
       this.screen.render();
       
     } catch (err) {
-      this.debugPanel?.error(`History screen error: ${err.message}`);
+      this.logger?.error(`History screen error: ${err.message}`);
       console.error('History screen error:', err);
       this.browse.showWarning('Failed to show history');
       this.cleanup();
@@ -150,7 +151,7 @@ export class historyManager {
   }
   
   cleanup() {
-    this.debugPanel?.debug("Cleaning up history manager resources");
+    this.logger?.debug("Cleaning up history manager resources");
 
     if (this.historyList) {
       this.historyList.removeAllListeners();
@@ -163,7 +164,7 @@ export class historyManager {
     }
     
     if (this.closeCallback) {
-      this.debugPanel?.debug("Executing history close callback");
+      this.logger?.debug("Executing history close callback");
       this.closeCallback();
       this.closeCallback = null;
     }

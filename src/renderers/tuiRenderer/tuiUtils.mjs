@@ -1,7 +1,10 @@
 import chalk from 'chalk';
+import { getLogger } from '../../utils/logger.mjs'; 
 
-export function processContentWithLinks(content, debugPanel) {
-  debugPanel?.debug('Processing content for links', {
+export function processContentWithLinks(content) {
+  const logger = getLogger();
+
+  logger?.debug('Processing content for links', {
     contentLength: content?.length || 0
   });
 
@@ -12,7 +15,7 @@ export function processContentWithLinks(content, debugPanel) {
     /\{underline\}\{cyan-fg\}(.*?)\{\/cyan-fg\}\{\/underline\}\{#(.*?)\}/g, 
     (match, text, url) => {
       links.push({ text, url, id: linkId++ });
-      debugPanel?.trace('Found link', {
+      logger?.debug('Found link', {
         id: linkId,
         text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
         url
@@ -21,7 +24,7 @@ export function processContentWithLinks(content, debugPanel) {
     }
   );
 
-  debugPanel?.info('Finished processing content for links', {
+  logger?.info('Finished processing content for links', {
     linkCount: links.length,
     processedContentLength: processedContent?.length || 0
   });
@@ -29,8 +32,10 @@ export function processContentWithLinks(content, debugPanel) {
   return { processedContent, links };
 }
 
-export function highlightFocusedLink(content, links, index, container, screen, debugPanel) {
-  debugPanel?.debug('Highlighting focused link', {
+export function highlightFocusedLink(content, links, index, container, screen) {
+  const logger = getLogger();
+
+  logger?.debug('Highlighting focused link', {
     linkIndex: index,
     totalLinks: links.length,
     contentLength: content?.length || 0
@@ -53,12 +58,12 @@ export function highlightFocusedLink(content, links, index, container, screen, d
       `{underline}{bold}{magenta-fg}[${linkId}]$1{/magenta-fg}{/bold}{/underline}`
     );
 
-    debugPanel?.trace('Applied highlighting to link', {
+    logger?.debug('Applied highlighting to link', {
       linkId,
       linkText: links[index].text.substring(0, 50) + (links[index].text.length > 50 ? '...' : '')
     });
   } else {
-    debugPanel?.warn('Invalid link index for highlighting', {
+    logger?.warn('Invalid link index for highlighting', {
       index,
       validRange: `0-${links.length - 1}`
     });
@@ -67,23 +72,25 @@ export function highlightFocusedLink(content, links, index, container, screen, d
   try {
     container.setContent(newContent);
     screen.render();
-    debugPanel?.trace('Updated container with highlighted link');
+    logger?.debug('Updated container with highlighted link');
   } catch (err) {
-    debugPanel?.error('Failed to highlight link', {
+    logger?.error('Failed to highlight link', {
       error: err.message,
       stack: err.stack?.split('\n')[0]
     });
   }
 }
 
-export function scrollToLink(links, linkIndex, container, screen, debugPanel) {
-  debugPanel?.debug('Attempting to scroll to link', {
+export function scrollToLink(links, linkIndex, container, screen) {
+  const logger = getLogger();
+
+  logger?.debug('Attempting to scroll to link', {
     linkIndex,
     totalLinks: links.length
   });
 
   if (linkIndex < 0 || linkIndex >= links.length) {
-    debugPanel?.warn('Invalid link index for scrolling', {
+    logger?.warn('Invalid link index for scrolling', {
       linkIndex,
       validRange: `0-${links.length - 1}`
     });
@@ -99,7 +106,7 @@ export function scrollToLink(links, linkIndex, container, screen, debugPanel) {
     const linkPos = cleanContent.indexOf(linkText);
     
     if (linkPos === -1) {
-      debugPanel?.warn('Link text not found in content', {
+      logger?.warn('Link text not found in content', {
         linkText,
         cleanContentLength: cleanContent.length
       });
@@ -109,30 +116,32 @@ export function scrollToLink(links, linkIndex, container, screen, debugPanel) {
     const lineNumber = calculateLineNumber(
       cleanContent.substring(0, linkPos), 
       container.width - 2,
-      debugPanel
+      logger
     );
     
-    debugPanel?.trace('Calculated scroll position', {
+    logger?.debug('Calculated scroll position', {
       linkText,
       linkPos,
       lineNumber
     });
     
-    scrollToLine(lineNumber, container, screen, debugPanel);
+    scrollToLine(lineNumber, container, screen, logger);
   } else {
-    debugPanel?.warn('Link missing ID property', { link });
+    logger?.warn('Link missing ID property', { link });
   }
 }
 
-export function scrollToFragment(fragment, container, screen, debugPanel, padding = 2) {
-  debugPanel?.debug('Attempting to scroll to fragment', {
+export function scrollToFragment(fragment, container, screen, padding = 2) {
+  const logger = getLogger();
+
+  logger?.debug('Attempting to scroll to fragment', {
     fragment,
     containerHeight: container.height,
     padding
   });
 
   if (!fragment) {
-    debugPanel?.warn('No fragment provided for scrolling');
+    logger?.warn('No fragment provided for scrolling');
     return;
   }
 
@@ -144,14 +153,14 @@ export function scrollToFragment(fragment, container, screen, debugPanel, paddin
   const fragmentMatch = rawContent.match(fragmentRegex);
   
   if (!fragmentMatch) {
-    debugPanel?.warn('Fragment not found in content', {
+    logger?.warn('Fragment not found in content', {
       fragment,
       contentLength: rawContent.length
     });
     return;
   }
 
-  debugPanel?.trace('Fragment match found', {
+  logger?.debug('Fragment match found', {
     match: fragmentMatch[1].substring(0, 50) + (fragmentMatch[1].length > 50 ? '...' : ''),
     position: fragmentMatch.index
   });
@@ -171,7 +180,7 @@ export function scrollToFragment(fragment, container, screen, debugPanel, paddin
     lineNumber > currentScroll + visibleHeight - padding * 2
   ) {
     const targetScroll = Math.max(0, lineNumber - Math.floor(visibleHeight / 2));
-    debugPanel?.trace('Scrolling to fragment', {
+    logger?.debug('Scrolling to fragment', {
       lineNumber,
       currentScroll,
       targetScroll
@@ -179,7 +188,7 @@ export function scrollToFragment(fragment, container, screen, debugPanel, paddin
     container.scrollTo(targetScroll);
     screen.render();
   } else {
-    debugPanel?.trace('Fragment already visible', {
+    logger?.debug('Fragment already visible', {
       lineNumber,
       currentScroll,
       visibleHeight
@@ -187,8 +196,8 @@ export function scrollToFragment(fragment, container, screen, debugPanel, paddin
   }
 }
 
-function calculateLineNumber(textBeforeLink, containerWidth, debugPanel) {
-  debugPanel?.trace('Calculating line number', {
+function calculateLineNumber(textBeforeLink, containerWidth, logger) {
+  logger?.debug('Calculating line number', {
     textLength: textBeforeLink.length,
     containerWidth
   });
@@ -211,7 +220,7 @@ function calculateLineNumber(textBeforeLink, containerWidth, debugPanel) {
     }
   }
 
-  debugPanel?.trace('Calculated line number', {
+  logger?.debug('Calculated line number', {
     lineNumber,
     finalLineLength: currentLineLength
   });
@@ -219,8 +228,8 @@ function calculateLineNumber(textBeforeLink, containerWidth, debugPanel) {
   return lineNumber;
 }
 
-function scrollToLine(lineNumber, container, screen, debugPanel, padding = 2) {
-  debugPanel?.debug('Scrolling to line', {
+function scrollToLine(lineNumber, container, screen, logger, padding = 2) {
+  logger?.debug('Scrolling to line', {
     lineNumber,
     containerHeight: container.height,
     padding
@@ -231,20 +240,20 @@ function scrollToLine(lineNumber, container, screen, debugPanel, padding = 2) {
   
   if (lineNumber < currentScroll + padding) {
     const targetScroll = Math.max(0, lineNumber - padding);
-    debugPanel?.trace('Scrolling up', {
+    logger?.debug('Scrolling up', {
       currentScroll,
       targetScroll
     });
     container.scrollTo(targetScroll);
   } else if (lineNumber > currentScroll + visibleHeight - padding) {
     const targetScroll = lineNumber - visibleHeight + padding;
-    debugPanel?.trace('Scrolling down', {
+    logger?.debug('Scrolling down', {
       currentScroll,
       targetScroll
     });
     container.scrollTo(targetScroll);
   } else {
-    debugPanel?.trace('Line already visible', {
+    logger?.debug('Line already visible', {
       lineNumber,
       currentScroll,
       visibleHeight
@@ -253,16 +262,16 @@ function scrollToLine(lineNumber, container, screen, debugPanel, padding = 2) {
   
   try {
     screen.render();
-    debugPanel?.trace('Screen rendered after scroll');
+    logger?.debug('Screen rendered after scroll');
   } catch (err) {
-    debugPanel?.error('Failed to render after scroll', {
+    logger?.error('Failed to render after scroll', {
       error: err.message
     });
   }
 }
 
-function scrollToElement(element, container, screen, debugPanel, padding = 2) {
-  debugPanel?.debug('Scrolling to element', {
+function scrollToElement(element, container, screen, logger, padding = 2) {
+  logger?.debug('Scrolling to element', {
     elementTop: element.top,
     containerHeight: container.height,
     padding
@@ -274,20 +283,20 @@ function scrollToElement(element, container, screen, debugPanel, padding = 2) {
   
   if (elementLine < currentScroll + padding) {
     const targetScroll = Math.max(0, elementLine - padding);
-    debugPanel?.trace('Scrolling up to element', {
+    logger?.debug('Scrolling up to element', {
       currentScroll,
       targetScroll
     });
     container.scrollTo(targetScroll);
   } else if (elementLine > currentScroll + visibleHeight - padding) {
     const targetScroll = elementLine - visibleHeight + padding;
-    debugPanel?.trace('Scrolling down to element', {
+    logger?.debug('Scrolling down to element', {
       currentScroll,
       targetScroll
     });
     container.scrollTo(targetScroll);
   } else {
-    debugPanel?.trace('Element already visible', {
+    logger?.debug('Element already visible', {
       elementLine,
       currentScroll,
       visibleHeight
@@ -296,17 +305,19 @@ function scrollToElement(element, container, screen, debugPanel, padding = 2) {
   
   try {
     screen.render();
-    debugPanel?.trace('Screen rendered after element scroll');
+    logger?.debug('Screen rendered after element scroll');
   } catch (err) {
-    debugPanel?.error('Failed to render after element scroll', {
+    logger?.error('Failed to render after element scroll', {
       error: err.message
     });
   }
 }
 
-export function getFragment(url, debugPanel) {
-  debugPanel?.trace('Extracting fragment from URL', { url });
+export function getFragment(url) {
+  const logger = getLogger();
+
+  logger?.debug('Extracting fragment from URL', { url });
   const fragment = url?.match(/#([^#]*)$/)?.[1] ?? null;
-  debugPanel?.debug('Extracted fragment', { fragment });
+  logger?.debug('Extracted fragment', { fragment });
   return fragment;
 }

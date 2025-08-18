@@ -1,15 +1,16 @@
 import { superScriptMap, subScriptMap } from '../constants/scriptMaps.mjs';
 import { addStructuralSeparator } from '../renderers/structuralRenderer.mjs';
 import chalk from 'chalk';
+import { getLogger } from './logger.mjs'; 
 
-export function toSuperScript(text, debugPanel) {
+function toSuperScript(text, logger) {
   try {
-    debugPanel?.debug(`Converting to superscript: "${text}"`); 
+    logger?.debug(`Converting to superscript: "${text}"`); 
     const result = text.split('').map(c => superScriptMap[c] || c).join('');
-    debugPanel?.debug(`Superscript result: "${result}"`);  
+    logger?.debug(`Superscript result: "${result}"`);  
     return result;
   } catch (error) {
-    debugPanel?.error('Superscript conversion failed', {  
+    logger?.error('Superscript conversion failed', {  
       text,
       error: error.message
     });
@@ -17,14 +18,14 @@ export function toSuperScript(text, debugPanel) {
   }
 }
 
-export function toSubScript(text, debugPanel) {
+function toSubScript(text, logger) {
   try {
-    debugPanel?.debug(`Converting to subscript: "${text}"`); 
+    logger?.debug(`Converting to subscript: "${text}"`); 
     const result = text.split('').map(c => subScriptMap[c] || c).join('');
-    debugPanel?.debug(`Subscript result: "${result}"`); 
+    logger?.debug(`Subscript result: "${result}"`); 
     return result;
   } catch (error) {
-    debugPanel?.error('Subscript conversion failed', { 
+    logger?.error('Subscript conversion failed', { 
       text,
       error: error.message
     });
@@ -32,7 +33,7 @@ export function toSubScript(text, debugPanel) {
   }
 }
 
-function collectFragments(node, debugPanel) {
+function collectFragments(node, logger) {
   const fragments = new Set();
   
   function traverse(element) {
@@ -43,7 +44,7 @@ function collectFragments(node, debugPanel) {
           const fragment = href.substring(1);
           if (fragment) {
             fragments.add(fragment);
-            debugPanel?.debug(`Found fragment target: #${fragment}`); 
+            logger?.debug(`Found fragment target: #${fragment}`); 
           }
         }
       }
@@ -52,7 +53,7 @@ function collectFragments(node, debugPanel) {
         traverse(child);
       }
     } catch (error) {
-      debugPanel?.warn('Fragment collection error', { 
+      logger?.warn('Fragment collection error', { 
         element: element?.tagName,
         error: error.message
       });
@@ -60,22 +61,21 @@ function collectFragments(node, debugPanel) {
   }
   
   traverse(node);
-  debugPanel?.info(`Collected ${fragments.size} fragment targets`); 
+  logger?.info(`Collected ${fragments.size} fragment targets`); 
   return fragments;
 }
 
 
-function initializeFragments(rootNode, context, debugPanel) {
+function initializeFragments(rootNode, context, logger) {
   context.fragmentTargets = collectFragments(rootNode);
 }
 
-const elementPositions = new Map();
-let currentLine = 0;
+export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', context = {}) {
+  const logger = getLogger();
 
-export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', context = {}, debugPanel) {
   try {
     if (!text.trim()) {
-      debugPanel?.debug(`Skipping empty ${tagName} node`);  
+      logger?.debug(`Skipping empty ${tagName} node`);  
       return '';
     }
 
@@ -83,13 +83,13 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
     const isFragmentTarget = elementId && context.fragmentTargets?.has(elementId);
 
     if (isFragmentTarget) {
-      debugPanel?.debug(`Formatting fragment target: #${elementId}`); 
+      logger?.debug(`Formatting fragment target: #${elementId}`); 
       text = `{fragment-target}${text}{/fragment-target}`;
     }
 
-    debugPanel?.debug(`Formatting ${tagName} node (depth ${depth})`);
+    logger?.debug(`Formatting ${tagName} node (depth ${depth})`);
 
-    debugPanel?.debug(`Formatting <${tagName}>`, {
+    logger?.debug(`Formatting <${tagName}>`, {
       depth,
       length: text.length,
       id: node?.id || null,
@@ -161,9 +161,9 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
       case 'address':
         return chalk.italic.gray(`${text}\n`);
       case 'sup':
-        return chalk.bold(toSuperScript(text));
+        return chalk.bold(toSuperScript(text, logger));
       case 'sub':
-        return chalk.dim(toSubScript(text));
+        return chalk.dim(toSubScript(text, logger));
       case 'kbd': {
         return chalk.bgBlack.white.bold(`[${text}]`); 
       }
@@ -237,7 +237,7 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
         return text;
     }
   } catch (error) {
-    debugPanel?.error('Text formatting failed', { 
+    logger?.error('Text formatting failed', { 
       tagName,
       text: text?.slice(0, 50),
       error: error.message

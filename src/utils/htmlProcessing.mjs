@@ -1,8 +1,11 @@
 import { JSDOM } from 'jsdom';
+import { getLogger } from './logger.mjs'; 
 
-export function parseHTML(html, debugPanel) {
+export function parseHTML(html) {
+  const logger = getLogger();
+    
   try {
-    debugPanel?.debug(`Starting HTML parsing (${html.length} bytes)`); 
+    logger?.debug(`Starting HTML parsing (${html.length} bytes)`); 
     
     const dom = new JSDOM(html, {
       runScripts: "outside-only",
@@ -15,7 +18,7 @@ export function parseHTML(html, debugPanel) {
       scripts: doc.getElementsByTagName('script').length
     };
 
-    debugPanel?.debug(`Parsed document stats:`, { 
+    logger?.debug(`Parsed document stats:`, { 
       tags: stats.tags,
       links: stats.links,
       scripts: stats.scripts,
@@ -23,13 +26,13 @@ export function parseHTML(html, debugPanel) {
     });
 
     if (stats.scripts > 0) {
-      debugPanel?.warn(`Document contains ${stats.scripts} scripts (will not execute)`); 
+      logger?.warn(`Document contains ${stats.scripts} scripts (will not execute)`); 
     }
 
     return doc;
 
   } catch (error) {
-    debugPanel?.error('HTML parsing failed', { 
+    logger?.error('HTML parsing failed', { 
       error: error.message,
       inputSample: html.substring(0, 100) + (html.length > 100 ? '...' : '')
     });

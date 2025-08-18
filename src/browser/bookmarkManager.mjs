@@ -5,19 +5,20 @@ import blessed from 'blessed';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
+import { getLogger } from '../utils/logger.mjs'; 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export class bookmarkManager {
-  constructor(browserInstance, screen, debugPanel) {
+  constructor(browserInstance, screen) {
     this.browser = browserInstance;
     this.screen = screen;
-    this.debugPanel = debugPanel;
+    this.logger = getLogger();
     this.bookmarks = [];
     this.overlay = null;
 
-    this.debugPanel?.info("Bookmark manager initialized");
+    this.logger?.info("Bookmark manager initialized");
     this.loadBookmarks();
   }
 
@@ -26,12 +27,12 @@ export class bookmarkManager {
       const bookmarksPath = path.join(process.env.HOME || process.env.USERPROFILE, '.neobrowse_bookmarks');
       if (fs.existsSync(bookmarksPath)) {
         this.bookmarks = JSON.parse(fs.readFileSync(bookmarksPath, 'utf8'));
-        this.debugPanel?.debug(`Loaded ${this.bookmarks.length} bookmarks from ${bookmarksPath}`);
+        this.logger?.debug(`Loaded ${this.bookmarks.length} bookmarks from ${bookmarksPath}`);
       } else {
-        this.debugPanel?.debug("No existing bookmarks file found");
+        this.logger?.debug("No existing bookmarks file found");
       }      
     } catch (err) {
-      this.debugPanel?.error(`Failed to load bookmarks: ${err.message}`);
+      this.logger?.error(`Failed to load bookmarks: ${err.message}`);
     }
   }
 
@@ -39,9 +40,9 @@ export class bookmarkManager {
     try {
       const bookmarksPath = path.join(process.env.HOME || process.env.USERPROFILE, '.neobrowse_bookmarks');
       fs.writeFileSync(bookmarksPath, JSON.stringify(this.bookmarks, null, 2));
-      this.debugPanel?.debug(`Saved ${this.bookmarks.length} bookmarks to ${bookmarksPath}`);
+      this.logger?.debug(`Saved ${this.bookmarks.length} bookmarks to ${bookmarksPath}`);
     } catch (err) {
-      this.debugPanel?.error(`Failed to save bookmarks: ${err.message}`);
+      this.logger?.error(`Failed to save bookmarks: ${err.message}`);
     }
   }
 
@@ -50,7 +51,7 @@ export class bookmarkManager {
     if (!title) title = this.activeTab?.currentDocument?.title || url;
     
     if (!url) {
-      this.debugPanel?.warn("Attempted to bookmark with no URL");
+      this.logger?.warn("Attempted to bookmark with no URL");
       if (!this.browser.isModalOpen) {
         this.showWarning('No URL to bookmark');
       }
@@ -60,12 +61,12 @@ export class bookmarkManager {
     if (!this.bookmarks.some(b => b.url === url)) {
       this.bookmarks.push({ url, title });
       this.saveBookmarks();
-      this.debugPanel?.info(`Added bookmark: "${title}" (${url})`);
+      this.logger?.info(`Added bookmark: "${title}" (${url})`);
       if (!this.browser.isModalOpen) {
         this.showWarning(`Bookmark added: ${title}`);
       }
     } else {
-      this.debugPanel?.debug(`Bookmark already exists: ${url}`);
+      this.logger?.debug(`Bookmark already exists: ${url}`);
       if (!this.browser.isModalOpen) this.showWarning('Already bookmarked');
     }
   }
@@ -76,19 +77,19 @@ export class bookmarkManager {
       const { title } = this.bookmarks[index];
       this.bookmarks.splice(index, 1);
       this.saveBookmarks();
-      this.debugPanel?.info(`Removed bookmark: "${title}" (${url})`);
+      this.logger?.info(`Removed bookmark: "${title}" (${url})`);
     } else {
-      this.debugPanel?.warn(`Attempted to remove non-existent bookmark: ${url}`);
+      this.logger?.warn(`Attempted to remove non-existent bookmark: ${url}`);
     }
   }
 
   async showBookmarks() {
     if (this.browser.isModalOpen) {
-      this.debugPanel?.debug("Skipping bookmarks modal (another modal is open)");
+      this.logger?.debug("Skipping bookmarks modal (another modal is open)");
       return
     }
     
-    this.debugPanel?.debug("Opening bookmarks modal");
+    this.logger?.debug("Opening bookmarks modal");
     this.browser.isModalOpen = true;
 
     try {
@@ -199,23 +200,23 @@ export class bookmarkManager {
         style: { fg: 'gray' }
       });
 
-      bindKey(this.screen, ['escape'], this.debugPanel, () => {
-        this.debugPanel?.debug("Closing bookmarks modal");
+      bindKey(this.screen, ['escape'], () => {
+        this.logger?.debug("Closing bookmarks modal");
         this.overlay.destroy();
         this.browser.isModalOpen = false;
         this.screen.render();
       });
 
-      bindKey(this.screen, ['enter'], this.debugPanel, async () => {
+      bindKey(this.screen, ['enter'], async () => {
         const selected = list.selected;
         if (selected >= 0 && selected < bookmarks.length) {
           const bookmark = bookmarks[selected];
-          this.debugPanel?.info(`Navigating to bookmarked URL: ${bookmark.url}`);
+          this.logger?.info(`Navigating to bookmarked URL: ${bookmark.url}`);
           this.overlay.destroy();
           this.browser.isModalOpen = false;
           await this.browser.navigate(bookmark.url);
         } else if (hasCurrentUrl && selected === bookmarks.length) {
-          this.debugPanel?.debug("Adding current page to bookmarks from modal");
+          this.logger?.debug("Adding current page to bookmarks from modal");
           await this.browser.addCurrentToBookmarks();
           this.overlay.destroy();
           this.browser.isModalOpen = false;
@@ -223,26 +224,26 @@ export class bookmarkManager {
         }
       });
 
-      bindKey(this.screen, ['d'], this.debugPanel, async () => {
+      bindKey(this.screen, ['d'], async () => {
         const selected = list.selected;
         if (selected >= 0 && selected < bookmarks.length) {
             const bookmark = bookmarks[selected];
-            this.debugPanel?.info(`Deleting bookmark: "${bookmark.title}" (${bookmark.url})`);
+            this.logger?.info(`Deleting bookmark: "${bookmark.title}" (${bookmark.url})`);
             this.removeBookmark(bookmark.url);
             
             this.overlay.destroy();
             this.browser.isModalOpen = false;
             await this.showBookmarks(); 
         } else {
-          this.debugPanel?.debug("No bookmark selected for deletion");
+          this.logger?.debug("No bookmark selected for deletion");
         }
       });
 
-      this.debugPanel?.info(`Displaying ${bookmarks.length} bookmarks in modal`);
+      this.logger?.info(`Displaying ${bookmarks.length} bookmarks in modal`);
       this.screen.render();
       list.focus();
     } catch (err) {
-      this.debugPanel?.error(`Bookmarks modal error: ${err.message}`);
+      this.logger?.error(`Bookmarks modal error: ${err.message}`);
       this.browser.isModalOpen = false;
       this.browser.showWarning('Failed to load bookmarks');
     }

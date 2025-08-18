@@ -1,8 +1,11 @@
 import chalk from 'chalk';
+import { getLogger } from '../utils/logger.mjs'; 
 
-export function addStructuralSeparator(tagName, text, debugPanel) {
+export function addStructuralSeparator(tagName, text) {
+  const logger = getLogger();
+
   try {
-    debugPanel?.debug(`Adding structural separator for <${tagName}>`, {
+    logger?.debug(`Adding structural separator for <${tagName}>`, {
       textLength: text.length,
       screenWidth: process.stdout.columns,
       isTTY: process.stdout.isTTY
@@ -11,7 +14,7 @@ export function addStructuralSeparator(tagName, text, debugPanel) {
     const boxWidth = Math.min(process.stdout.columns - 4, 60);
 
     const createBox = (label, content, color) => {
-      debugPanel?.debug(`Creating box separator: ${label}`, {
+      logger?.debug(`Creating box separator: ${label}`, {
         boxWidth,
         labelLength: label.length
       });
@@ -25,7 +28,7 @@ export function addStructuralSeparator(tagName, text, debugPanel) {
     };
     
     const createSeperator = (label, content, color) => {
-      debugPanel?.debug(`Creating simple separator: ${label}`);
+      logger?.debug(`Creating simple separator: ${label}`);
       const separator = `── ${label} ──`;
       return color(`\n${separator}\n${content}\n`);
     };
@@ -41,14 +44,14 @@ export function addStructuralSeparator(tagName, text, debugPanel) {
 
     const result = separators[tagName] || text;
     
-    debugPanel?.debug(`Structural separator applied to <${tagName}>`, {
+    logger?.debug(`Structural separator applied to <${tagName}>`, {
       finalLength: result.length,
       type: separators[tagName] ? 'custom' : 'fallback'
     });
     
     return result;
   } catch (error) {
-    debugPanel?.error('Failed to add structural separator', {
+    logger?.error('Failed to add structural separator', {
       tagName,
       error: error.message,
       stack: error.stack?.split('\n')[0]

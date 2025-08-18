@@ -1,9 +1,10 @@
 import chalk from 'chalk';
 import { extractText } from '../utils/domHelpers.mjs';
+import { getLogger } from '../utils/logger.mjs'; 
 
-export function calculateColumnWidths(rows, debugPanel) {
+export function calculateColumnWidths(rows, logger) {
   try {
-    debugPanel?.debug('Calculating column widths', {
+    logger?.debug('Calculating column widths', {
       rowCount: rows.length,
       columnCount: rows[0]?.length || 0
     });
@@ -15,13 +16,13 @@ export function calculateColumnWidths(rows, debugPanel) {
       });
     });
 
-    debugPanel?.debug('Column width calculation complete', {
+    logger?.debug('Column width calculation complete', {
       widths: widths,
       maxWidth: Math.max(...widths)
     })
     return widths;
   } catch (error) {
-    debugPanel?.error('Failed to calculate column widths', {
+    logger?.error('Failed to calculate column widths', {
       error: error.message,
       sampleRow: rows[0]?.map(c => c.slice(0, 10)) || []
     });
@@ -29,39 +30,41 @@ export function calculateColumnWidths(rows, debugPanel) {
   }
 }
 
-export function renderTable(node, debugPanel) {
+export function renderTable(node) {
+  const logger = getLogger();
   try {
-    debugPanel?.info('Starting table rendering', {
+
+    logger?.info('Starting table rendering', {
       source: node.outerHTML?.slice(0, 50) + (node.outerHTML?.length > 50 ? '...' : '')
     });
 
     const rows = []; 
     const rowsElements = node.querySelectorAll('tr');
 
-    debugPanel?.debug(`Found ${rowsElements.length} table rows`);
+    logger?.debug(`Found ${rowsElements.length} table rows`);
 
     rowsElements.forEach(tr => {
       const row = [];
       const cells = tr.querySelectorAll('th, td');
       
-      debugPanel?.debug(`Processing row ${trIdx} with ${cells.length} cells`);
+      logger?.debug(`Processing row ${trIdx} with ${cells.length} cells`);
       
       cells.forEach((cell, cellIdx) => {
-        const cellText = extractText(cell, debugPanel).trim();
+        const cellText = extractText(cell, logger).trim();
         row.push(cellText);
-        debugPanel?.trace(`Cell [${trIdx},${cellIdx}]: "${cellText}"`);
+        logger?.trace(`Cell [${trIdx},${cellIdx}]: "${cellText}"`);
       });
 
       if (row.length) rows.push(row);
     });
 
     if (rows.length === 0) {
-      debugPanel?.warn('Empty table detected');
+      logger?.warn('Empty table detected');
       return '';
     }
 
-    const colWidths = calculateColumnWidths(rows);
-    debugPanel?.debug('Table layout calculated', {
+    const colWidths = calculateColumnWidths(rows, logger);
+    logger?.debug('Table layout calculated', {
       columns: colWidths.length,
       totalWidth: colWidths.reduce((a, b) => a + b + 3, 1) 
     });
@@ -70,12 +73,12 @@ export function renderTable(node, debugPanel) {
     const hasHeader = node.querySelector('thead') !== null;
 
     output += chalk.gray('┌' + colWidths.map(w => '─'.repeat(w + 2)).join('┬') + '┐\n');
-    debugPanel?.trace('Rendered top border');
+    logger?.trace('Rendered top border');
 
     rows.forEach((row, rowIndex) => {
       if (rowIndex === 1 && hasHeader) {
         output += chalk.gray('├' + colWidths.map(w => '─'.repeat(w + 2)).join('┼') + '┤\n');
-        debugPanel?.trace('Rendered header separator')
+        logger?.trace('Rendered header separator')
       }
 
       let rowText = '│';
@@ -90,14 +93,14 @@ export function renderTable(node, debugPanel) {
     });
 
     output += chalk.gray('└' + colWidths.map(w => '─'.repeat(w + 2)).join('┴') + '┘');
-    debugPanel?.debug('Table rendering complete', {
+    logger?.debug('Table rendering complete', {
       outputLength: output.length,
       lineCount: output.split('\n').length
     });
 
     return output;
   } catch (error) {
-    debugPanel?.error('Table rendering failed', {
+    logger?.error('Table rendering failed', {
       error: error.message,
       nodeName: node?.nodeName,
       stack: error.stack?.split('\n')[0]

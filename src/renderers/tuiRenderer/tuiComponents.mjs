@@ -1,9 +1,12 @@
 import blessed from 'blessed';
 import chalk from 'chalk';
+import { getLogger } from '../../utils/logger.mjs'; 
 
-export function createScreen(pageTitle, debugPanel) {
+export function createScreen(pageTitle) {
+  const logger = getLogger();
+
   try {
-    debugPanel?.debug('Creating main screen', {
+    logger?.debug('Creating main screen', {
       title: `NeoBrowse - ${pageTitle}`,
       features: ['smartCSR', 'fullUnicode', 'mouseSupport']
     });
@@ -19,12 +22,12 @@ export function createScreen(pageTitle, debugPanel) {
     });
 
     screen.on('render', () => {
-      debugPanel?.trace('Screen rendered');
+      logger?.debug('Screen rendered');
     });
 
     return screen;
   } catch (error) {
-    debugPanel?.error('Failed to create screen', {
+    logger?.error('Failed to create screen', {
       error: error.message,
       stack: error.stack?.split('\n')[0]
     });
@@ -32,9 +35,11 @@ export function createScreen(pageTitle, debugPanel) {
   }
 }
 
-export function createTabBar(debugPanel) {
+export function createTabBar() {
+  const logger = getLogger();
+
   try {
-    debugPanel?.debug('Creating tab bar', {
+    logger?.debug('Creating tab bar', {
       position: 'top:1',
       style: 'blue/magenta'
     });
@@ -56,16 +61,18 @@ export function createTabBar(debugPanel) {
       }
     });
   } catch (error) {
-    debugPanel?.error('Failed to create tab bar', {
+    logger?.error('Failed to create tab bar', {
       error: error.message
     });
     throw error;
   }
 }
 
-export function createContainer(debugPanel) {
+export function createContainer() {
+  const logger = getLogger();
+
   try {
-    debugPanel?.debug('Creating content container', {
+    logger?.debug('Creating content container', {
       dimensions: '100% width, height:100%-7',
       features: ['scrollable', 'keyNavigation']
     });
@@ -92,21 +99,23 @@ export function createContainer(debugPanel) {
     });
 
     container.on('scroll', (offset) => {
-      debugPanel?.trace(`Container scrolled to offset: ${offset}`);
+      logger?.debug(`Container scrolled to offset: ${offset}`);
     });
 
     return container;
   } catch (error) {
-    debugPanel?.error('Failed to create container', {
+    logger?.error('Failed to create container', {
       error: error.message
     });
     throw error;
   }
 }
 
-export function createHeader(pageTitle, debugPanel) {
+export function createHeader(pageTitle) {
+  const logger = getLogger();
+
   try {
-    debugPanel?.debug('Creating header', {
+    logger?.debug('Creating header', {
       title: pageTitle,
       position: 'top:0'
     });
@@ -123,16 +132,18 @@ export function createHeader(pageTitle, debugPanel) {
       }
     });
   } catch (error) {
-    debugPanel?.error('Failed to create header', {
+    logger?.error('Failed to create header', {
       error: error.message
     });
     throw error;
   }
 }
 
-export function createFooter(debugPanel) {
+export function createFooter() {
+  const logger = getLogger();
+  
   try {
-    debugPanel?.debug('Creating footer', {
+    logger?.debug('Creating footer', {
       position: 'bottom:0',
       height: 3,
       sections: ['Navigation', 'Links', 'Tabs']
@@ -154,16 +165,18 @@ export function createFooter(debugPanel) {
       }
     });
   } catch (error) {
-    debugPanel?.error('Failed to create footer', {
+    logger?.error('Failed to create footer', {
       error: error.message
     });
     throw error;
   }
 }
 
-export function createURLTextbox(debugPanel) {
+export function createURLTextbox() {
+  const logger = getLogger();
+  
   try {
-    debugPanel?.debug('Creating URL textbox', {
+    logger?.debug('Creating URL textbox', {
       position: 'centered',
       dimensions: '80% width, 3 height'
     });
@@ -184,23 +197,25 @@ export function createURLTextbox(debugPanel) {
     });
 
     textbox.on('submit', (value) => {
-      debugPanel?.info('URL submitted', {
+      logger?.info('URL submitted', {
         value: value.slice(0, 100) // Truncate long URLs
       });
     });
 
     return textbox;
   } catch (error) {
-    debugPanel?.error('Failed to create URL textbox', {
+    logger?.error('Failed to create URL textbox', {
       error: error.message
     });
     throw error;
   }
 }
 
-export function createSearchTextbox(debugPanel) {
+export function createSearchTextbox() {
+  const logger = getLogger();
+
   try {
-    debugPanel?.debug('Creating search textbox', {
+    logger?.debug('Creating search textbox', {
       position: 'centered',
       style: 'green border'
     });
@@ -221,14 +236,14 @@ export function createSearchTextbox(debugPanel) {
     });
 
     textbox.on('submit', (value) => {
-      debugPanel?.info('Search submitted', {
+      logger?.info('Search submitted', {
         queryLength: value.length
       });
     });
 
     return textbox;
   } catch (error) {
-    debugPanel?.error('Failed to create search textbox', {
+    logger?.error('Failed to create search textbox', {
       error: error.message
     });
     throw error;

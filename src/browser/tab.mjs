@@ -4,29 +4,30 @@ import chalk from 'chalk';
 import dns from 'dns/promises'
 import fs from 'fs';
 import path from 'path';
+import { getLogger } from '../utils/logger.mjs'; 
 
 export class Tab {
-  constructor(debugPanel) {
+  constructor() {
     this.history = []; 
+    this.logger = getLogger();
     this.currentIndex = -1; 
     this.currentUrl = 'https://arungeorgesaji.is-a.dev/NeoBrowse/';
     this.currentDocument = null;
     this.active = false;
     this.MAX_HISTORY = 100;
-    this.debugPanel = debugPanel;
 
-    this.debugPanel?.info(`New tab created with homepage: ${this.currentUrl}`);
+    this.logger?.info(`New tab created with homepage: ${this.currentUrl}`);
   }
 
   async isUrl(input) {
     if (!input || typeof input !== 'string') {
-      this.debugPanel?.debug(`Invalid URL input: ${input}`); 
+      this.logger?.debug(`Invalid URL input: ${input}`); 
       return false;
     }
 
     const trimmed = input.trim();
     if (/\s/.test(trimmed)) {
-      this.debugPanel?.debug(`URL contains whitespace: ${trimmed}`); 
+      this.logger?.debug(`URL contains whitespace: ${trimmed}`); 
       return false;
     }
 
@@ -34,10 +35,10 @@ export class Tab {
     try {
       const url = new URL(trimmed.includes('://') ? trimmed : 'https://' + trimmed);
       await dns.lookup(url.hostname);
-      this.debugPanel?.debug(`Valid URL: ${trimmed}`); 
+      this.logger?.debug(`Valid URL: ${trimmed}`); 
       return true;
     } catch (err) {
-      this.debugPanel?.warn(`Invalid URL: ${trimmed} - ${err.message}`);
+      this.logger?.warn(`Invalid URL: ${trimmed} - ${err.message}`);
       return false;
     }
   }
@@ -49,10 +50,10 @@ export class Tab {
       }
 
       if (url === 'https://arungeorgesaji.is-a.dev/NeoBrowse/') {
-        this.debugPanel?.info("Loading NeoBrowse homepage");
+        this.logger?.info("Loading NeoBrowse homepage");
         const homepagePath = path.join(process.cwd(), 'index.html');
         const htmlContent = fs.readFileSync(homepagePath, 'utf8');
-        const doc = parseHTML(htmlContent, this.debugPanel);
+        const doc = parseHTML(htmlContent);
         
         this.currentDocument = doc;
 
@@ -66,7 +67,7 @@ export class Tab {
       }
 
       if (options.historyIndex !== undefined) {
-        this.debugPanel?.debug(`Navigating to history index ${options.historyIndex}`);
+        this.logger?.debug(`Navigating to history index ${options.historyIndex}`);
         if (options.historyIndex >= 0 && options.historyIndex < this.history.length) {
           this.currentIndex = options.historyIndex;
           url = this.history[this.currentIndex];
@@ -74,7 +75,7 @@ export class Tab {
           throw new Error('Invalid history index');
         }
       } else if (url === 'back') {
-        this.debugPanel?.debug("Attempting to go back in history");
+        this.logger?.debug("Attempting to go back in history");
         if (this.currentIndex > 0) {
           this.currentIndex--;
           url = this.history[this.currentIndex];
@@ -82,7 +83,7 @@ export class Tab {
           return null; 
         }
       } else if (url === 'forward') {
-        this.debugPanel?.debug("Attempting to go forward in history");
+        this.logger?.debug("Attempting to go forward in history");
         if (this.currentIndex < this.history.length - 1) {
           this.currentIndex++;
           url = this.history[this.currentIndex];
@@ -90,7 +91,7 @@ export class Tab {
           return null; 
         }
       } else if (url === 'reload') {
-        this.debugPanel?.info(`Reloading: ${this.currentUrl}`);
+        this.logger?.info(`Reloading: ${this.currentUrl}`);
         if (!this.currentUrl) {
           throw new Error('No page to reload');
         }
@@ -99,18 +100,18 @@ export class Tab {
         url = this.resolveUrl(url);
 
         if (!(await this.isUrl(url))) {
-          this.debugPanel?.info(`Treating input as search query: ${url}`);
+          this.logger?.info(`Treating input as search query: ${url}`);
           const searchQuery = encodeURIComponent(url);
           url = `https://searx.be/search?q=${searchQuery}&format=html`;
         }
         
         if (!options.preserveHistory && this.currentIndex < this.history.length - 1) {
-          this.debugPanel?.debug(`Truncating history at index ${this.currentIndex}`);
+          this.logger?.debug(`Truncating history at index ${this.currentIndex}`);
           this.history = this.history.slice(0, this.currentIndex + 1);
         }
 
         if (!options.replaceHistory) {
-          this.debugPanel?.info(`Added to history: ${url}`);
+          this.logger?.info(`Added to history: ${url}`);
           this.history.push(url);
           this.currentIndex = this.history.length - 1;
           
@@ -121,13 +122,13 @@ export class Tab {
         }
       }
 
-      this.debugPanel?.info(`Fetching: ${url}`);
-      const html = await fetchHTML(url, this.debugPanel);
-      const doc = parseHTML(html, this.debugPanel);
+      this.logger?.info(`Fetching: ${url}`);
+      const html = await fetchHTML(url);
+      const doc = parseHTML(html);
       
       this.currentUrl = url;
       this.currentDocument = doc;
-      this.debugPanel?.debug(`Parsed document with title: ${doc.title || 'Untitled'}`);
+      this.logger?.debug(`Parsed document with title: ${doc.title || 'Untitled'}`);
       
       return {
         document: doc,
@@ -138,7 +139,7 @@ export class Tab {
         historyLength: this.history.length
       };
     } catch (err) {
-      this.debugPanel?.error(`Navigation failed: ${err.message}`, { url });
+      this.logger?.error(`Navigation failed: ${err.message}`, { url });
       throw err;
     }
   }
@@ -146,7 +147,7 @@ export class Tab {
   resolveUrl(url) {
     try {
       if (url.startsWith('/')) {
-        this.debugPanel?.debug(`Resolving relative URL: ${url}`);
+        this.logger?.debug(`Resolving relative URL: ${url}`);
         const baseUrl = new URL(this.currentUrl);
         return baseUrl.origin + url;
       }
@@ -157,13 +158,13 @@ export class Tab {
       }
       
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        this.debugPanel?.debug(`Adding https:// prefix to: ${url}`);
+        this.logger?.debug(`Adding https:// prefix to: ${url}`);
         return 'https://' + url;
       }
       
       return url;
     } catch (err) {
-      this.debugPanel?.warn(`URL resolution failed: ${err.message}`, { url });
+      this.logger?.warn(`URL resolution failed: ${err.message}`, { url });
       console.error(chalk.yellow('URL resolution error:'), err.message);
       return url;
     }
@@ -176,7 +177,7 @@ export class Tab {
       currentIndex: this.currentIndex,
       history: [...this.history]
     };
-    this.debugPanel?.debug(`Current history state`, state);
+    this.logger?.debug(`Current history state`, state);
     return state;
   }
 }

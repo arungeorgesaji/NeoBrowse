@@ -3,12 +3,13 @@ import path from 'path';
 import blessed from 'blessed';
 import chalk from 'chalk';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
+import { getLogger } from '../utils/logger.mjs'; 
 
 export class settingsManager {
-  constructor(browserInstance, screen, debugPanel) {
+  constructor(browserInstance, screen) {
     this.browser = browserInstance;
     this.screen = screen;
-    this.debugPanel = debugPanel;
+    this.logger = getLogger();
     this.settings = {
       searchEngine: 'https://search.brave.com/search?q={query}&source=web',
       maxDepth: 30,
@@ -18,8 +19,8 @@ export class settingsManager {
       timeFormat: '24h'
     };
 
-    this.debugPanel?.info("Settings manager initialized");  
-    this.debugPanel?.debug(`Default config path: ${this.configPath}`);
+    this.logger?.info("Settings manager initialized");  
+    this.logger?.debug(`Default config path: ${this.configPath}`);
 
     this.searchEngines = {
       'https://searx.be/search?q={query}&format=html': 'Searx',
@@ -45,17 +46,17 @@ export class settingsManager {
   loadSettings() {
     try {
       if (fs.existsSync(this.configPath)) {
-        this.debugPanel?.debug(`Loading settings from ${this.configPath}`);
+        this.logger?.debug(`Loading settings from ${this.configPath}`);
         const rawData = fs.readFileSync(this.configPath, 'utf8');
         const loadedSettings = JSON.parse(rawData);
         
         this.settings = { ...this.settings, ...loadedSettings };
-        this.debugPanel?.info("Settings loaded successfully");
+        this.logger?.info("Settings loaded successfully");
       } else {
-        this.debugPanel?.debug("No settings file found - using defaults");
+        this.logger?.debug("No settings file found - using defaults");
       }
     } catch (err) {
-      this.debugPanel?.error(`Failed to load settings: ${err.message}`);
+      this.logger?.error(`Failed to load settings: ${err.message}`);
       this.browser.showWarning('Corrupt settings - using defaults');
     }
   }
@@ -64,15 +65,15 @@ export class settingsManager {
     try {
       const configDir = path.dirname(this.configPath);
       if (!fs.existsSync(configDir)) {
-          this.debugPanel?.debug(`Creating config directory: ${configDir}`);
+          this.logger?.debug(`Creating config directory: ${configDir}`);
           fs.mkdirSync(configDir, { recursive: true });
       }
 
       fs.writeFileSync(this.configPath, JSON.stringify(this.settings, null, 2), { mode: 0o600 });
-      this.debugPanel?.info(`Settings saved to ${this.configPath}`);
+      this.logger?.info(`Settings saved to ${this.configPath}`);
       return true;
     } catch (err) {
-      this.debugPanel?.error(`Failed to save settings: ${err.message}`);
+      this.logger?.error(`Failed to save settings: ${err.message}`);
       this.browser.showWarning('Failed to save settings');
       return false;
     }
@@ -80,12 +81,12 @@ export class settingsManager {
 
   showSettings() {
     if (this.browser.isModalOpen) {
-      this.debugPanel?.debug("Skipping settings (another modal is open)"); 
+      this.logger?.debug("Skipping settings (another modal is open)"); 
       return;
     }
     
     try {
-      this.debugPanel?.info("Opening settings modal");
+      this.logger?.info("Opening settings modal");
       this.browser.isModalOpen = true;
       this.currentSettings = { ...this.settings }; 
       
@@ -148,15 +149,15 @@ export class settingsManager {
         this.cleanup();
       };
 
-      bindKey(this.settingsList, ['s', 'S'], this.debugPanel, () => this.handleSave());
-      bindKey(this.screen, ['escape'], this.debugPanel, handleClose);
-      bindKey(this.screen, ['d', 'D'], this.debugPanel, () => this.showResetConfirmation());
+      bindKey(this.settingsList, ['s', 'S'], () => this.handleSave());
+      bindKey(this.screen, ['escape'], handleClose);
+      bindKey(this.screen, ['d', 'D'], () => this.showResetConfirmation());
 
       this.settingsList.focus();
       this.browser.currentScreen.render();
 
     } catch (err) {
-      this.debugPanel?.error(`Settings modal error: ${err.message}`);
+      this.logger?.error(`Settings modal error: ${err.message}`);
       this.browser.showWarning('Failed to show settings');
       this.cleanup();
     }
@@ -187,7 +188,7 @@ export class settingsManager {
       'User Agent', 
       'Time Format'
     ];
-    this.debugPanel?.debug(`Selected setting: ${settingNames[index]}`);
+    this.logger?.debug(`Selected setting: ${settingNames[index]}`);
 
     switch (index) {
       case 0: 
@@ -251,7 +252,7 @@ export class settingsManager {
       this.settingsList.focus();
     });
 
-    bindKey(popup, ['escape'], this.debugPanel, () => {
+    bindKey(popup, ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -262,7 +263,7 @@ export class settingsManager {
   }
 
   showUserAgentSelector() {
-    this.debugPanel?.debug("Opening user agent selector");
+    this.logger?.debug("Opening user agent selector");
     const userAgents = {
       'Desktop Chrome': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Desktop Firefox': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0',
@@ -316,7 +317,7 @@ export class settingsManager {
 
     popup.on('select', (item, index) => {
       const agentNames = Object.keys(userAgents);
-      this.debugPanel?.info(`Selected user agent: ${agentNames[index]}`);
+      this.logger?.info(`Selected user agent: ${agentNames[index]}`);
       const selectedName = agentNames[index];
       
       if (selectedName === 'Custom') {
@@ -343,7 +344,7 @@ export class settingsManager {
       }
     });
 
-    bindKey(popup, ['escape'], this.debugPanel, () => {
+    bindKey(popup, ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -354,7 +355,7 @@ export class settingsManager {
   }
 
   showSearchEngineSelector() {
-    this.debugPanel?.debug("Opening search engine selector");
+    this.logger?.debug("Opening search engine selector");
     const selectorEngines = {};
     for (const [url, name] of Object.entries(this.searchEngines)) {
       selectorEngines[name] = url;
@@ -398,7 +399,7 @@ export class settingsManager {
 
     popup.on('select', (item, index) => {
       const engineNames = Object.keys(selectorEngines);
-      this.debugPanel?.info(`Selected search engine: ${engineNames[index]}`);
+      this.logger?.info(`Selected search engine: ${engineNames[index]}`);
       const selectedName = engineNames[index];
       
       if (selectedName === 'Custom') {
@@ -425,7 +426,7 @@ export class settingsManager {
       }
     });
 
-    bindKey(popup, ['escape'], this.debugPanel, () => {
+    bindKey(popup, ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -436,7 +437,7 @@ export class settingsManager {
   }
 
   showNumberInput(label, key, currentValue, min, max) {
-    this.debugPanel?.debug(`Editing number setting: ${label}`); 
+    this.logger?.debug(`Editing number setting: ${label}`); 
     const popup = blessed.box({
       parent: this.overlay,
       top: 'center',
@@ -482,7 +483,7 @@ export class settingsManager {
     });
 
     input.on('submit', (value) => {
-      this.debugPanel?.info(`Updated ${label} to ${value}`);
+      this.logger?.info(`Updated ${label} to ${value}`);
       const numValue = parseInt(value);
       if (!isNaN(numValue) && numValue >= min && numValue <= max) {
         this.currentSettings[key] = numValue;
@@ -492,7 +493,7 @@ export class settingsManager {
       }
     });
 
-    bindKey(input, ['escape'], this.debugPanel, () => {
+    bindKey(input, ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -560,7 +561,7 @@ export class settingsManager {
       }
     });
 
-    bindKey(input,input,  ['escape'], this.debugPanel, () => {
+    bindKey(input,input,  ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
       this.browser.currentScreen.render();
@@ -571,10 +572,10 @@ export class settingsManager {
   }
 
   handleSave() {
-    this.debugPanel?.info("Saving settings changes");
+    this.logger?.info("Saving settings changes");
     this.settings = { ...this.currentSettings };
     if (this.saveSettings()) {
-      this.debugPanel?.debug("Showing save confirmation");  
+      this.logger?.debug("Showing save confirmation");  
       this.showConfirmation();
     }
   }
@@ -651,13 +652,13 @@ export class settingsManager {
       this.settingsList.focus();
     });
 
-    bindKey(popup, ['escape'], this.debugPanel, () => {
+    bindKey(popup, ['escape'], () => {
       popup.destroy();
       this.settingsList.focus();
     });
 
-    bindKey(yesButton, ['right', 'left'], this.debugPanel, () => noButton.focus());
-    bindKey(noButton, ['left', 'right'], this.debugPanel, () => yesButton.focus());
+    bindKey(yesButton, ['right', 'left'], () => noButton.focus());
+    bindKey(noButton, ['left', 'right'], () => yesButton.focus());
 
     noButton.key(['enter'], () => {
       popup.destroy();
@@ -669,7 +670,7 @@ export class settingsManager {
   }
 
   resetToDefaults() {
-    this.debugPanel?.info("Resetting settings to defaults");
+    this.logger?.info("Resetting settings to defaults");
     this.currentSettings = {
       searchEngine: 'https://search.brave.com/search?q={query}&source=web',
       maxDepth: 30,
@@ -715,7 +716,7 @@ export class settingsManager {
       style: { fg: 'gray' }
     });
 
-    bindKey(popup, ['.', 'escape', 'enter', 'space', 'q'], this.debugPanel, () => {
+    bindKey(popup, ['.', 'escape', 'enter', 'space', 'q'], () => {
       popup.destroy();
       this.cleanup();
     });
@@ -725,7 +726,7 @@ export class settingsManager {
   }
 
   cleanup() {
-    this.debugPanel?.debug("Cleaning up settings modal");
+    this.logger?.debug("Cleaning up settings modal");
     if (this.settingsList) {
       this.settingsList.removeAllListeners();
       this.settingsList = null;
@@ -737,7 +738,7 @@ export class settingsManager {
     }
     
     this.browser.isModalOpen = false;
-    this.debugPanel?.debug("Settings modal closed");
+    this.logger?.debug("Settings modal closed");
     this.browser.currentScreen?.render();
   }
 }

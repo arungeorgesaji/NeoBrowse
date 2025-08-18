@@ -6,3 +6,5 @@ Add support for files
 Fix urlFragments
 Fix debugPanel
 Compartmentalize showWarnings
+
+Make it access the callstack and find the file being run in logger

@@ -4,10 +4,13 @@ import { extractText } from '../../utils/domHelpers.mjs';
 import { createScreen, createTabBar, createContainer, createHeader, createFooter, createURLTextbox, createSearchTextbox } from './tuiComponents.mjs';
 import { setupHandlers } from './tuiHandlers.mjs';
 import { processContentWithLinks } from './tuiUtils.mjs';
+import { getLogger } from '../../utils/logger.mjs'; 
 
-export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debugPanel) {
+export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
+  const logger = getLogger();
+
   try {
-    debugPanel?.info('Starting TUI rendering', {
+    logger?.info('Starting TUI rendering', {
       pageTitle,
       hasDocument: Boolean(document),
       tabCount: tabOptions.tabs?.length || 0
@@ -15,84 +18,84 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
 
     if (global.currentScreen) {
       try {
-        debugPanel?.debug('Cleaning up previous screen');
+        logger?.debug('Cleaning up previous screen');
         global.currentScreen.destroy();
       } catch (cleanupError) {
-        debugPanel?.error('Screen cleanup failed', {
+        logger?.error('Screen cleanup failed', {
           error: cleanupError.message
         });
       }
     }
 
-    const screen = createScreen(pageTitle, debugPanel);
+    const screen = createScreen(pageTitle);
     global.currentScreen = screen;
 
     screen.on('resize', () => {
       try {
-        debugPanel?.trace('Handling screen resize');
+        logger?.debug('Handling screen resize');
         screen.emit('repaint');
         screen.render();
       } catch (resizeError) {
-        debugPanel?.error('Resize handler failed', {
+        logger?.error('Resize handler failed', {
           error: resizeError.message
         });
       }
     });
 
-    const tabBar = createTabBar(debugPanel);
-    const container = createContainer(debugPanel);
+    const tabBar = createTabBar();
+    const container = createContainer();
     let content = '';
     let links = [];
 
     try {
       if (document?.body) {
-        debugPanel?.debug('Extracting document content');
+        logger?.debug('Extracting document content');
         const currentUrl = tabOptions.tabs?.find(t => t.active)?.currentUrl || '';
-        const rawContent = extractText(document.body, 0, currentUrl, debugPanel);
+        const rawContent = extractText(document.body, 0, currentUrl);
         
-        debugPanel?.debug('Processing links in content');
-        const result = processContentWithLinks(rawContent, debugPanel);
+        logger?.debug('Processing links in content');
+        const result = processContentWithLinks(rawContent);
         content = result?.processedContent || chalk.yellow('No processable content');
         links = result?.links || [];
         
-        debugPanel?.info('Content processing complete', {
+        logger?.info('Content processing complete', {
           contentLength: content.length,
           linkCount: links.length
         });
       } else {
         content = chalk.red('No document body found');
-        debugPanel?.warn('Missing document body');
+        logger?.warn('Missing document body');
       }
     } catch (contentError) {
       content = chalk.red(`Content processing failed: ${contentError.message}`);
-      debugPanel?.error('Content processing error', {
+      logger?.error('Content processing error', {
         error: contentError.message,
         stack: contentError.stack?.split('\n')[0]
       });
     }
 
     try {
-      debugPanel?.debug('Setting container content');
+      logger?.debug('Setting container content');
       container.setContent(content);
     } catch (contentSetError) {
-      debugPanel?.error('Failed to set container content', {
+      logger?.error('Failed to set container content', {
         error: contentSetError.message
       });
       container.setContent(chalk.red('Could not display page content'));
     }
 
-    const header = createHeader(pageTitle, debugPanel);
-    const footer = createFooter(debugPanel);
-    const urlInput = createURLTextbox(debugPanel);
-    const searchInput = createSearchTextbox(debugPanel);
+    const header = createHeader(pageTitle);
+    const footer = createFooter();
+    const urlInput = createURLTextbox();
+    const searchInput = createSearchTextbox();
 
     const components = [header, tabBar, container, footer, urlInput, searchInput];
     components.forEach(component => {
       try {
-        debugPanel?.trace(`Appending component: ${component.type}`);
+        logger?.debug(`Appending component: ${component.type}`);
         screen.append(component);
       } catch (appendError) {
-        debugPanel?.error('Component append failed', {
+        logger?.error('Component append failed', {
           component: component.type,
           error: appendError.message
         });
@@ -102,7 +105,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
     const updateTabItems = () => {
       try {
         const tabs = tabOptions.tabs || [];
-        debugPanel?.debug('Updating tab bar items', {
+        logger?.debug('Updating tab bar items', {
           tabCount: tabs.length
         });
 
@@ -114,7 +117,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
             callback: () => {
               if (tabOptions.onSwitchTab) {
                 try {
-                  debugPanel?.info('Switching tabs', {
+                  logger?.info('Switching tabs', {
                     tabIndex: i,
                     title: tab.title
                   });
@@ -122,7 +125,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
                   updateTabItems();
                   screen.render();
                 } catch (tabSwitchError) {
-                  debugPanel?.error('Tab switch failed', {
+                  logger?.error('Tab switch failed', {
                     tabIndex: i,
                     error: tabSwitchError.message
                   });
@@ -143,7 +146,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
           }
         });
       } catch (tabError) {
-        debugPanel?.error('Tab update failed', {
+        logger?.error('Tab update failed', {
           error: tabError.message
         });
       }
@@ -152,16 +155,16 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
     updateTabItems();
 
     try {
-      debugPanel?.debug('Setting initial focus');
+      logger?.debug('Setting initial focus');
       container.focus();
     } catch (focusError) {
-      debugPanel?.error('Failed to set focus', {
+      logger?.error('Failed to set focus', {
         error: focusError.message
       });
     }
 
     try {
-      debugPanel?.info('Setting up event handlers');
+      logger?.info('Setting up event handlers');
       setupHandlers({
         screen,
         container,
@@ -172,35 +175,34 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
         links,
         updateTabItems,
         content,
-        debugPanel
       });
     } catch (handlerError) {
-      debugPanel?.error('Handler setup failed', {
+      logger?.error('Handler setup failed', {
         error: handlerError.message,
         stack: handlerError.stack?.split('\n')[0]
       });
     }
 
     try {
-      debugPanel?.debug('Performing final render');
+      logger?.debug('Performing final render');
       screen.render();
-      debugPanel?.info('TUI rendering complete');
+      logger?.info('TUI rendering complete');
       return { screen, container };
     } catch (renderError) {
-      debugPanel?.error('Final render failed', {
+      logger?.error('Final render failed', {
         error: renderError.message
       });
       throw renderError;
     }
 
   } catch (mainError) {
-    debugPanel?.error('Fatal TUI rendering error', {
+    logger?.error('Fatal TUI rendering error', {
       error: mainError.message,
       stack: mainError.stack?.split('\n').slice(0, 3).join('\n')
     });
 
     try {
-      debugPanel?.warn('Creating fallback error screen');
+      logger?.warn('Creating fallback error screen');
       const errorScreen = blessed.screen({ smartCSR: true });
       errorScreen.append(blessed.box({
         content: chalk.red(`Fatal Error:\n${mainError.message}\n\nCheck console for details`),
@@ -214,7 +216,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}, debu
       errorScreen.render();
       return errorScreen;
     } catch (fallbackError) {
-      debugPanel?.error('Fallback screen creation failed', {
+      logger?.error('Fallback screen creation failed', {
         error: fallbackError.message
       });
       process.exit(1);

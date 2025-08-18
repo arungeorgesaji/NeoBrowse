@@ -1,5 +1,4 @@
 import { neoBrowse } from './browser/neoBrowse.mjs';
-import { debugPanel } from './utils/debugPanel.mjs';
 import chalk from 'chalk';
 
 async function main() {
