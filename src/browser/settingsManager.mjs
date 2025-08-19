@@ -11,7 +11,7 @@ export class settingsManager {
     this.screen = screen;
     this.logger = getLogger();
     this.settings = {
-      searchEngine: 'https://search.brave.com/search?q={query}&source=web',
+      searchEngine: 'https://searx.be/search?q={query}&format=html',
       maxDepth: 30,
       maxNodes: 10000,
       timeout: 10000,
@@ -672,7 +672,7 @@ export class settingsManager {
   resetToDefaults() {
     this.logger?.info("Resetting settings to defaults");
     this.currentSettings = {
-      searchEngine: 'https://search.brave.com/search?q={query}&source=web',
+      searchEngine: 'https://searx.be/search?q={query}&format=html',
       maxDepth: 30,
       maxNodes: 10000,
       timeout: 10000,

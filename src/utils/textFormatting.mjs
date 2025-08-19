@@ -185,6 +185,87 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
         const value = node.getAttribute('value') || text;
         return chalk.gray(`[${value}]`); 
       }
+      case 'figure':
+        return chalk.gray(`\n[Figure]\n${text}\n[/Figure]\n`);
+      case 'figcaption':
+        return chalk.italic.dim(`Caption: ${text}\n`);
+      case 'details': {
+        const summary = node.querySelector('summary')?.textContent || 'Details';
+        return chalk.gray(`\n[${summary}]\n${text}\n`);
+      }
+      case 'summary':
+        return '';
+      case 'dialog':
+        return chalk.bgBlack.white(`\n💬 ${text}\n`);
+      case 'menu':
+        return '\n' + text + '\n';
+      case 'meter': {
+        const value = node.getAttribute('value') || '0';
+        const max = node.getAttribute('max') || '100';
+        return chalk.green(`[${value}/${max}]`);
+      }
+      case 'progress': {
+        const value = node.getAttribute('value') || '0';
+        const max = node.getAttribute('max') || '100';
+        return chalk.cyan(`[${value}%]`);
+      }
+      case 'base': {
+        const href = node.getAttribute('href');
+        if (href) context.baseUrl = href;
+        return '';
+      }
+      case 'wbr':
+        return '';
+      case 'nobr':
+        return text; 
+      case 'plaintext':
+        return text; 
+      case 'dl': {
+        const terms = node.querySelectorAll('dt');
+        let output = '\n';
+        terms.forEach(dt => {
+          const dd = dt.nextElementSibling;
+          output += chalk.bold(extractText(dt, depth + 1) + ': ');
+          output += (dd && dd.tagName === 'DD') ? extractText(dd, depth + 1) + '\n' : '\n';
+        });
+        return output + '\n';
+      }
+      case 'optgroup': {
+        const label = node.getAttribute('label') || '';
+        return chalk.bold.dim(`\n${label}:\n`);
+      }
+      case 'acronym':
+        return chalk.underline(text); 
+      case 'applet':
+        return chalk.dim('[Java applet]');
+      case 'basefont':
+        return text; 
+      case 'big':
+        return chalk.bold(text); 
+      case 'center':
+        return text; 
+      case 'dir':
+        return formatTextByTag('ul', text, node, depth, baseUrl, context); 
+      case 'font':
+        return text; 
+      case 'frame':
+      case 'frameset':
+      case 'noframes':
+        return chalk.dim('[Frame content]');
+      case 'isindex':
+        return chalk.dim('[Search input]');
+      case 'strike':
+        return formatTextByTag('s', text, node, depth, baseUrl, context); 
+      case 'tt':
+        return formatTextByTag('code', text, node, depth, baseUrl, context); 
+      case 'xmp':
+        return formatTextByTag('pre', text, node, depth, baseUrl, context);
+      case 'marquee':
+        return chalk.yellow(text); 
+      case 'noembed':
+        return text; 
+      case 'image':
+        return formatTextByTag('img', text, node, depth, baseUrl, context); 
       case 'cite':
         return chalk.italic.blue(`"${text}"`); 
       case 'ins':

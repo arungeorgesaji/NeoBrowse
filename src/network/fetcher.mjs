@@ -18,7 +18,7 @@ export async function fetchHTML(url) {
     logger?.debug(`Received ${data.length} bytes from ${url}`);
     
     const sanitized = sanitizeHtml(data, { 
-      allowedTags: ['h1', 'h2', 'h3', 'p', 'a', 'ul', 'li', 'strong', 'em', 'br', 'hr', 'title', 'q', 'i', 'b', 'div', 'header', 'footer', 'head', 'body', 'section', 'span', 'address', 'article', 'main', 'html', 'sup', 'sub', 'code', 'pre', 'blockquote', 'nav', 'samp', 'var', 'mark', 'time', 'kbd', 'del', 'ins', 'small', 'data', 'cite', 'abbr', 'dfn', 'dt', 'dd', 'table', 'thead', 'tbody', 'tfoot', 'th', 'td', 'tr'],
+      allowedTags: ['h1', 'h2', 'h3', 'p', 'a', 'ul', 'li', 'strong', 'em', 'br', 'hr', 'title', 'q', 'i', 'b', 'div', 'header', 'footer', 'head', 'body', 'section', 'span', 'address', 'article', 'main', 'html', 'sup', 'sub', 'code', 'pre', 'blockquote', 'nav', 'samp', 'var', 'mark', 'time', 'kbd', 'del', 'ins', 'small', 'data', 'cite', 'abbr', 'dfn', 'dt', 'dd', 'table', 'thead', 'tbody', 'tfoot', 'th', 'td', 'tr', 'figure', 'figcaption', 'details', 'summary', 'dialog', 'menu', 'menuitem', 'meter', 'progress', 'base', 'wbr', 'nobr', 'plaintext', 'dl', 'optgroup', 'acronym', 'applet', 'basefont', 'big', 'center', 'dir', 'font', 'frame', 'frameset', 'noframes', 'isindex', 'strike', 'tt', 'xmp', 'marquee', 'noembed', 'image'],
       allowedAttributes: {
         '*': ['id', 'name'],
         'a': ['href', 'title', 'id', 'name']
