@@ -5,7 +5,3 @@ Add support for files
 
 Fix urlFragments
 Compartmentalize showWarnings
-
-make debugPanel always come to front even when b,h or s is opened
-Fix debugPanel keyHandlers
-

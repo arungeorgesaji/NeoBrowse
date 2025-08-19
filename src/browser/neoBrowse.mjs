@@ -7,6 +7,7 @@ import { renderTUI } from '../renderers/tuiRenderer/tuiCore.mjs';
 import { scrollToFragment, getFragment } from '../renderers/tuiRenderer/tuiUtils.mjs'
 import { getLogger } from '../utils/logger.mjs'; 
 import { debugPanel } from '../utils/debugPanel.mjs'; 
+import { warningManager } from '../utils/warningManager.mjs';
 import chalk from 'chalk';
 import blessed from 'blessed';
 
@@ -24,6 +25,7 @@ export class neoBrowse {
     this.isModalOpen = false;
     this.logger = getLogger();
     this.debugPanel = new debugPanel(this.currentScreen);
+    this.warningManager = new warningManager(this.currentScreen);
 
     this.initManagers();
     this.initEventHandlers();
@@ -106,7 +108,7 @@ export class neoBrowse {
         return true;
       } else {
         this.logger?.warn(`Navigation failed for: ${url}`);
-        this.showWarning(
+        this.warningManager.showWarning(
           url === 'back' ? "Can't go back further!" :
           url === 'forward' ? "Can't go forward further!" :
           url === this.activeTab?.currentUrl ? "You're already on this page!" :
@@ -116,7 +118,7 @@ export class neoBrowse {
       }
     } catch (err) {
       this.logger?.error(`Navigation error: ${err.message}`);
-      this.showWarning('Navigation error');
+      this.warningManager.showWarning('Navigation error');
       return false;
     }
   }
@@ -137,7 +139,7 @@ export class neoBrowse {
       this.logger?.error(`Failed to create new tab: ${err.message}`);
       this.tabs.pop();
       this.activateLastTab();
-      this.showWarning('Failed to create new tab');
+      this.warningManager.showWarning('Failed to create new tab');
       return false;
     }
   }
@@ -154,7 +156,7 @@ export class neoBrowse {
   closeCurrentTab() {
     if (this.tabs.length <= 1) {
       this.logger?.warn("Attempted to close the last tab");
-      this.showWarning("Can't close the last tab");
+      this.warningManager.showWarning("Can't close the last tab");
       return false;
     }
 
@@ -198,7 +200,7 @@ export class neoBrowse {
   async addCurrentToBookmarks() {
     if (!this.activeTab) {
       this.logger?.warn("No active tab to bookmark");
-      this.showWarning('No active tab to bookmark');
+      this.warningManager.showWarning('No active tab to bookmark');
       return;
     }
 
@@ -210,7 +212,7 @@ export class neoBrowse {
       this.logger?.info(`Bookmark added: ${title} (${url})`);
     } catch (err) {
       this.logger?.error(`Bookmark error: ${err.message}`);
-      this.showWarning('Failed to add bookmark');
+      this.warningManager.showWarning('Failed to add bookmark');
     }
   }
 
@@ -221,10 +223,12 @@ export class neoBrowse {
     } 
     
     this.isModalOpen = true;
+    this.warningManager.setModalState(true);
     this.logger?.debug("Opening history modal");
     
     const cleanup = () => {
       this.isModalOpen = false;
+      this.warningManager.setModalState(false);
       this.logger?.debug("Closed history modal");
       this.currentScreen?.render();
     };
@@ -236,6 +240,7 @@ export class neoBrowse {
     this.logger?.debug("Refreshing UI with new tab data");
 
     const wasDebugPanelVisible = this.debugPanel?.panel.hidden === false;
+    const hadWarning = this.warningManager.hasActiveWarning();
 
     if (this.currentScreen) {
       this.currentScreen.destroy();
@@ -268,6 +273,12 @@ export class neoBrowse {
     this.contentContainer = container;
 
     this.debugPanel = new debugPanel(this.currentScreen);
+
+    this.warningManager = new warningManager(this.currentScreen);
+
+    if (hadWarning) {
+      this.warningManager.showWarning(hadWarning.message, hadWarning.remainingTime);
+    }
 
     if (wasDebugPanelVisible) {
       this.debugPanel.show();
