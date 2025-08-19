@@ -2,6 +2,3 @@ Fix Settings page
 Actually integrate settings
 Fix tables
 Add support for files
-
-Fix urlFragments
-Compartmentalize showWarnings
