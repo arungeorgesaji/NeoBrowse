@@ -161,6 +161,7 @@ export class neoBrowse {
     }
 
     const closedTab = this.tabs[this.activeTabIndex];
+    const closedUrl = closedTab.currentUrl || 'New Tab';
     this.tabs.splice(this.activeTabIndex, 1);
     this.activateLastTab();
 
