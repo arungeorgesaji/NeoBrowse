@@ -7,7 +7,7 @@ A powerful terminal-based browser with a TUI interface, built with Node.js and B
 - TUI interface with keyboard navigation
 - Fast rendering of simplified HTML content
 - Multiple tabs support
-- Integrated URL/search bar (Even supports urlFragments and files)
+- Integrated URL/search bar (Even supports local files)
 - Bookmarks management
 - Browsing history
 - Customizable settings

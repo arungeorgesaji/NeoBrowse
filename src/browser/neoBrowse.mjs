@@ -2,7 +2,7 @@ import { Tab } from './tab.mjs';
 import { LOG_KEY_BINDINGS } from '../constants/log.mjs' 
 import { historyManager } from './historyManager.mjs';
 import { bookmarkManager } from './bookmarkManager.mjs';
-import { settingsManager } from './settingsManager.mjs';
+import { settingsManager } from './settings/settingsManager.mjs';
 import { renderTUI } from '../renderers/tuiRenderer/tuiCore.mjs';
 import { scrollToFragment, getFragment } from '../renderers/tuiRenderer/tuiUtils.mjs'
 import { getLogger } from '../utils/logger.mjs'; 

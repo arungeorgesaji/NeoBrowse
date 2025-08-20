@@ -1,11 +1,6 @@
-<base> - Base URL for relative links
 <ruby>, <rt>, <rp> - Ruby annotations (for East Asian typography)
-<wbr> - Word break opportunity
-<dl> - Description list
 <img> - Image
 <picture> - Responsive images
-<figure> - Figure with caption
-<figcaption> - Figure caption
 <audio> - Audio player
 <video> - Video player
 <source> - Media source
@@ -22,34 +17,15 @@
 <button> - Clickable button
 <select> - Dropdown list
 <option> - Dropdown option
-<optgroup> - Grouped options
 <label> - Input label
 <fieldset> - Group form elements
 <legend> - Fieldset caption
 <datalist> - Predefined input options
 <output> - Form output
-<progress> - Progress bar
-<meter> - Scalar measurement 
+<menuitem> - Menu item (deprecated)
 <caption> - Table caption
 <col> - Column properties
 <colgroup> - Column group
-<details> - Expandable details
-<summary> - Summary for <details>
-<dialog> - Dialog box
-<menu> - Menu (deprecated in favor of <nav>)
-<menuitem> - Menu item (deprecated)
-<acronym> (Use <abbr> instead)
-<applet> (Use <object>)
-<basefont>
-<big>
-<center>
-<dir> (Use <ul>)
-<font>
-<frame>, <frameset>, <noframes>
-<isindex>
-<strike> (Use <del> or <s>)
-<tt> (Use <code> or <pre>)
-<xmp> (Use <pre> or <code>)
 <slot> - Web Components slot
 <template> - HTML template 
 <fencedframe> - Nested browsing context with privacy features<selectedcontent> - Displays selected option content
@@ -64,12 +40,8 @@
 <hgroup> - Heading group 
 <content> - Obsolete web component (replaced by <slot>)
 <shadow> - Obsolete web component
-<image> - Ancient precursor to <img>
-<marquee> - Scrolling text
 <menuitem> - Menu item (deprecated)
-<nobr> - No line breaks
 <noembed> - Fallback for <embed>
-<plaintext> - Raw text rendering
 <rb> - Ruby base text
 <rtc> - Ruby text container
 <metadata> - Metadata about the document

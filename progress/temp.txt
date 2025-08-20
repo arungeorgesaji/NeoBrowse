@@ -1,7 +1,6 @@
+Fix tables
+Add every other element bcz now is the time
+
 Fix Settings page
 Actually integrate settings
-Fix tables
 Add support for files
-
-Fix urlFragments
-Compartmentalize showWarnings
