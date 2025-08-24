@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/arungeorgesaji/NeoBrowse#readme",
   "dependencies": {
+    "ascii-art": "^2.8.5",
     "axios": "^1.10.0",
     "blessed": "^0.1.81",
     "chalk": "^5.4.1",

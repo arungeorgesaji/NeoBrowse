@@ -1,0 +1,5 @@
+table
+image
+picture
+audio 
+video

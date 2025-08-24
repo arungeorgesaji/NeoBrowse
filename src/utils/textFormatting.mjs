@@ -1,5 +1,6 @@
 import { superScriptMap, subScriptMap } from '../constants/scriptMaps.mjs';
 import { addStructuralSeparator } from '../renderers/structuralRenderer.mjs';
+import { renderImage } from '../renderers/renderImage.mjs';
 import chalk from 'chalk';
 import { getLogger } from './logger.mjs'; 
 
@@ -295,7 +296,6 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
       case 'th':
       case 'td':
         return text; 
-      
       case 'header':
       case 'main':
       case 'footer':
@@ -303,17 +303,99 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
       case 'section':
       case 'nav':
         return addStructuralSeparator(tagName, text);
-      
       case 'html':
       case 'body':
       case 'div':
       case 'span':
       case 'aside':
         return text;
-
       case 'template':
         return ''
-      
+      case 'caption':
+        return chalk.italic.dim(`Table: ${text}\n`);
+      case 'col':
+      case 'colgroup':
+        return ''; 
+      case 'bdi':
+        return text; 
+      case 'bdo':
+        return text;   
+      case 'search':
+        return chalk.blue(`[Search] ${text} [/Search]\n`);
+      case 'hgroup':
+        return chalk.bold(`\n${text}\n`);
+      case 'rb':
+        return text; 
+      case 'rtc':
+        return ''; 
+      case 'metadata':
+        return '';
+      case 'link':
+        return ''; 
+      case 'nav':
+        return addStructuralSeparator('nav', text);
+      case 'menuitem':
+        return chalk.dim(`[Menu: ${text}]`);
+      case 'noembed':
+        return text; 
+      case 'param':
+        return ''; 
+      case 'picture':
+      case 'img': {
+        if (!context.asyncOperations) {
+          context.asyncOperations = [];
+        }
+        
+        const imagePromise = renderImage(node, baseUrl, logger, context);
+        context.asyncOperations.push(imagePromise);
+        
+        let altText = 'Image';
+        if (tagName === 'img') {
+          altText = node.getAttribute('alt') || 'Image';
+        } else if (tagName === 'picture') {
+          const imgElement = node.querySelector('img');
+          altText = imgElement?.getAttribute('alt') || 'Responsive image';
+        }
+        
+        return `[Loading image: ${altText}...]`;
+      }
+      case 'audio': {
+        if (!context.asyncOperations) {
+          context.asyncOperations = [];
+        }
+        
+        const audioPromise = renderAudio(node, baseUrl, logger, context);
+        context.asyncOperations.push(audioPromise);
+        
+        const audioText = node.getAttribute('title') || 
+                         node.getAttribute('aria-label') || 
+                         'Audio content';
+        
+        return `[Audio: ${audioText}]`;
+      }
+      case 'ruby': {
+        const baseText = extractText(node, depth + 1);
+        const rtElement = node.querySelector('rt');
+        const rpElement = node.querySelector('rp');
+        
+        let annotation = '';
+        if (rtElement) {
+          annotation = extractText(rtElement, depth + 1);
+        }
+        
+        if (rpElement && !rtElement) {
+          annotation = extractText(rpElement, depth + 1);
+        }
+        
+        if (annotation) {
+          return chalk.dim(`${baseText}`) + chalk.blue(`(${annotation})`);
+        }
+        
+        return baseText;
+      }
+      case 'rt':
+      case 'rp':
+        return ''; 
       default:
         return text;
     }

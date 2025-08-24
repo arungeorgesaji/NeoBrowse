@@ -1,13 +1,9 @@
-<ruby>, <rt>, <rp> - Ruby annotations (for East Asian typography)
-<img> - Image
-<picture> - Responsive images
 <audio> - Audio player
 <video> - Video player
 <source> - Media source
 <track> - Subtitles/tracks
 <embed> - External plugin
 <object> - Embedded object
-<param> - Object parameter
 <map> - Image map
 <area> - Clickable area in image map
 <iframe> - Inline frame
@@ -23,27 +19,11 @@
 <datalist> - Predefined input options
 <output> - Form output
 <menuitem> - Menu item (deprecated)
-<caption> - Table caption
-<col> - Column properties
-<colgroup> - Column group
 <slot> - Web Components slot
 <template> - HTML template 
 <fencedframe> - Nested browsing context with privacy features<selectedcontent> - Displays selected option content
-<bdi> - Bidirectional text isolation
-<bdo> - Bidirectional text override
 <svg> - SVG container
 <math> - MathML container 
 <canvas> - Graphics canvas
-<search> - Search-related content container
 <menu> - Semantic menu (you mention it's deprecated, but it's actually still valid)
-<ruby> - Ruby annotation container (you have the others but missing the main container) 
-<hgroup> - Heading group 
 <content> - Obsolete web component (replaced by <slot>)
-<shadow> - Obsolete web component
-<menuitem> - Menu item (deprecated)
-<noembed> - Fallback for <embed>
-<rb> - Ruby base text
-<rtc> - Ruby text container
-<metadata> - Metadata about the document
-<link> - Link to external resources
-<nav> - Navigation links

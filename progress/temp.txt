@@ -1,6 +1,3 @@
-Fix tables
-Add every other element bcz now is the time
-
 Fix Settings page
 Actually integrate settings
 Add support for files
