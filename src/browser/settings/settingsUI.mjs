@@ -22,10 +22,10 @@ export class settingsUI {
     this.createOverlay();
     this.createSettingsList(settings);
     this.createHelpText();
-    this.bindEvents(onSave, onReset);
-    
+    this.bindEvents(onSave, onReset); 
     this.settingsList.focus();
-    this.browser.currentScreen.render();
+
+    this.screen.render();
   }
 
   createOverlay() {
@@ -51,7 +51,7 @@ export class settingsUI {
       parent: this.overlay,
       bottom: 3,
       left: 'center',
-      content: 'Enter: Edit • S: Save • D: Reset • Esc: Close',
+      content: 'Enter: Edit • S: Ctrl-Save • D: Reset • Esc: Close',
       style: { fg: 'gray' }
     });
   }
@@ -83,32 +83,44 @@ export class settingsUI {
       parent: this.overlay,
       bottom: 3,
       left: 'center',
-      content: 'Enter: Edit • S: Save • D: Reset • Esc: Close',
+      content: 'Enter: Edit • Ctrl-S: Save • D: Reset • Esc: Close',
       style: { fg: 'gray' }
     });
   }
 
   updateDisplay(settings) {
-    const engineName = SEARCH_ENGINES[settings.searchEngine] || 'Custom';
+    const engineName = this.getKeyByValue(SEARCH_ENGINES, settings.searchEngine) || 'Custom';
+    const userAgentName = this.getKeyByValue(USER_AGENTS, settings.userAgent) || 'Custom';
+    const timeFormatName = this.getKeyByValue(TIME_FORMATS, settings.timeFormat) || settings.timeFormat;
+
     const items = [
       `Search Engine: ${engineName}`,
       `Max Depth: ${settings.maxDepth}`,
       `Max Nodes: ${settings.maxNodes}`,
       `Timeout: ${settings.timeout}ms`,
-      `User Agent: ${settings.userAgent.slice(0, 40)}...`,
-      `Time Format: ${settings.timeFormat === '24h' ? '24-hour' : '12-hour'}`
+      `User Agent: ${userAgentName}`,
+      `Time Format: ${timeFormatName}`
     ];
 
     this.settingsList.setItems(items);
     this.browser.currentScreen.render();
   }
 
+  getKeyByValue(object, value) {
+    for (const [key, val] of Object.entries(object)) {
+      if (val === value) {
+        return key;
+      }
+    }
+    return null;
+  }
+
   bindEvents(onSave, onReset) {
-    bindKey(this.settingsList, ['s', 'S'], () => {
+    bindKey(this.settingsList, ['C-s'], () => {
       if (!this.activePopup) onSave();
     });
 
-    bindKey(this.settingsList, ['d', 'D'], () => {
+    bindKey(this.settingsList, ['d'], () => {
       if (!this.activePopup) onReset();
     });
 
@@ -205,7 +217,7 @@ export class settingsUI {
         onSubmit(num);
         this.settingsList.focus();
       } catch (err) {
-        this.browser.showWarning(err.message);
+        this.logger?.warn(err.message);
       }
     });
 
@@ -235,7 +247,7 @@ export class settingsUI {
     input.on('submit', (value) => {
       if (value.trim()) {
         popup.destroy();
-        this.actievePopup = null;
+        this.activePopup = null;
         onSubmit(value.trim());
         this.settingsList.focus();
       }

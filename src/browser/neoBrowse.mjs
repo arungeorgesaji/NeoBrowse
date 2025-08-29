@@ -60,37 +60,6 @@ export class neoBrowse {
     this.logger?.debug("Screen destroyed, exiting...");
   }
 
-  showWarning(message, duration = 2000) {
-    if (!this.currentScreen || this.isModalOpen) return;
-
-    if (this.warningTimeout) {
-      clearTimeout(this.warningTimeout);
-      this.warningTimeout = null;
-    }
-
-    const footer = this.currentScreen.children.find(
-      child => child.type === 'box' && child.position.bottom === 0
-    );
-
-    if (footer) {
-      if (!this.originalFooterContent && footer.content !== message) {
-        this.originalFooterContent = footer.content;
-      }
-
-      footer.setContent(chalk.bgYellow.black(` ${message} `));
-      this.currentScreen.render();
-
-      this.warningTimeout = setTimeout(() => {
-        if (footer && this.originalFooterContent) {
-          footer.setContent(this.originalFooterContent);
-          this.currentScreen.render();
-        }
-        this.warningTimeout = null;
-        this.originalFooterContent = null;
-      }, duration);
-    }
-  }
-
   async navigate(url) {
     this.logger?.debug(`Navigating to: ${url}`);  
   
@@ -224,12 +193,10 @@ export class neoBrowse {
     } 
     
     this.isModalOpen = true;
-    this.warningManager.setModalState(true);
     this.logger?.debug("Opening history modal");
     
     const cleanup = () => {
       this.isModalOpen = false;
-      this.warningManager.setModalState(false);
       this.logger?.debug("Closed history modal");
       this.currentScreen?.render();
     };

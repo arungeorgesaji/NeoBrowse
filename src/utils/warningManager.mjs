@@ -8,15 +8,12 @@ export class warningManager {
     this.warningTimeout = null;
     this.originalFooterContent = null;
     this.logger = getLogger();
-    this.isModalOpen = false;
+    this.lastWarningMessage = null;
+    this.warningStartTime = null;
+    this.warningDuration = null;
   }
 
   showWarning(message, duration = this.defaultDuration) {
-    if (!this.screen || this.isModalOpen) {
-      this.logger?.debug('Cannot show warning - no screen or modal is open');
-      return false;
-    }
-
     if (this.warningTimeout) {
       clearTimeout(this.warningTimeout);
       this.warningTimeout = null;
@@ -34,6 +31,11 @@ export class warningManager {
 
     footer.setContent(chalk.bgYellow.black(` ${message} `));
     this.screen.render();
+    
+    this.lastWarningMessage = message;
+    this.warningStartTime = Date.now();
+    this.warningDuration = duration;
+    
     this.logger?.info(`Showing warning: ${message}`);
 
     this.warningTimeout = setTimeout(() => {
@@ -56,6 +58,9 @@ export class warningManager {
     }
     this.warningTimeout = null;
     this.originalFooterContent = null;
+    this.lastWarningMessage = null;
+    this.warningStartTime = null;
+    this.warningDuration = null;
   }
 
   clearWarning() {
@@ -63,17 +68,9 @@ export class warningManager {
       clearTimeout(this.warningTimeout);
       this.warningTimeout = null;
     }
-
     const footer = this.findFooter();
     if (footer && this.originalFooterContent) {
       this.restoreFooter(footer);
-    }
-  }
-
-  setModalState(state) {
-    this.isModalOpen = state;
-    if (state) {
-      this.clearWarning();
     }
   }
 

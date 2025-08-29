@@ -150,6 +150,7 @@ export function createFooter() {
     });
 
     return blessed.box({
+      name: 'footerBox',
       bottom: 0,
       height: 3,
       width: '100%',
@@ -162,7 +163,13 @@ export function createFooter() {
       style: {
         bg: 'blue',
         fg: 'white'
-      }
+      },
+
+      input: false,
+      clickable: false,
+      focusable: false,
+      mouse: false,
+      keys: false,
     });
   } catch (error) {
     logger?.error('Failed to create footer', {
