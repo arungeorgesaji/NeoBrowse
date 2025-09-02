@@ -11,7 +11,8 @@ export class settingsManager {
     this.screen = screen;
     this.logger = getLogger();
     this.warningTimeout = null;
-    this.warningManager = new warningManager(screen);
+    this.warningManager = new warningManager(this.screen, { pageTypeGetter: () => 'settings' });
+
     this.storage = new settingsStorage(this.logger);
     this.ui = new settingsUI(browserInstance, screen, this.logger);
     this.settings = this.loadSettings();
@@ -47,6 +48,8 @@ export class settingsManager {
   showSettings() {
     this.currentSettings = { ...this.settings };
     this.logger?.debug("Opening settings interface");
+
+    this.browser.currentPageType = 'settings';
     
     this.ui.show(
       this.currentSettings,
@@ -195,6 +198,22 @@ export class settingsManager {
         this.logger?.error("Failed to save settings after reset");
       }
     });
+  }
+
+  cleanup() {
+    this.logger?.debug("Cleaning up settings manager resources");
+    
+    if (this.ui) {
+        this.ui.cleanup();
+    }
+    
+    if (this.browser && this.browser.currentScreen) {
+        this.browser.currentPageType = 'main';
+        this.browser.footer = createFooter('main');
+        this.browser.currentScreen.append(this.browser.footer);
+        this.browser.footer.setFront();
+        this.browser.currentScreen.render();
+    }
   }
 
   get searchEngine() { 

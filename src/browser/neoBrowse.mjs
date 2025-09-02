@@ -4,6 +4,7 @@ import { historyManager } from './historyManager.mjs';
 import { bookmarkManager } from './bookmarkManager.mjs';
 import { settingsManager } from './settings/settingsManager.mjs';
 import { renderTUI } from '../renderers/tuiRenderer/tuiCore.mjs';
+import { createFooter } from '../renderers/tuiRenderer/tuiComponents.mjs';
 import { scrollToFragment, getFragment } from '../renderers/tuiRenderer/tuiUtils.mjs'
 import { getLogger } from '../utils/logger.mjs'; 
 import { debugPanel } from '../utils/debugPanel.mjs'; 
@@ -25,7 +26,9 @@ export class neoBrowse {
     this.isModalOpen = false;
     this.logger = getLogger();
     this.debugPanel = new debugPanel(this.currentScreen);
-    this.warningManager = new warningManager(this.currentScreen);
+    this.currentPageType = 'main';
+    this.warningManager = new warningManager(this.currentScreen, { pageTypeGetter: () => this.currentPageType });
+
 
     this.initManagers();
     this.initEventHandlers();
@@ -240,9 +243,12 @@ export class neoBrowse {
     this.currentScreen = screen;
     this.contentContainer = container;
 
+    this.footer = createFooter(); 
+    this.currentScreen.append(this.footer);   
+
     this.debugPanel = new debugPanel(this.currentScreen);
 
-    this.warningManager = new warningManager(this.currentScreen);
+    this.warningManager = new warningManager(this.currentScreen, { pageTypeGetter: () => this.currentPageType });
 
     if (hadWarning) {
       this.warningManager.showWarning(hadWarning.message, hadWarning.remainingTime);

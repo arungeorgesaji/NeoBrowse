@@ -139,32 +139,67 @@ export function createHeader(pageTitle) {
   }
 }
 
-export function createFooter() {
+export function createFooter(pageType = 'main') {
   const logger = getLogger();
+
+  const pageStyles = {
+    main: {
+      bg: 'blue',
+      fg: 'white',
+      content: [
+        '{bold}Nav:{/} [N]ewURL  [B]ack  [F]orward  [R]eload  [S]earch  [H]istory',
+        '{bold}Links:{/} [K]Next  [J]Prev  [Enter]Open  [M]Bookmarks',
+        '{bold}Tabs:{/} [T]New  [W]Close  [1-9]Switch  [Tab]Cycle  [Q]uit'
+      ],
+      height: 3 
+    },
+    settings: {
+      bg: 'magenta',
+      fg: 'white',
+      content: [
+        '{bold}Settings:{/} [Enter]Edit [Ctrl+S]Save [D]Reset [Esc]Close'
+      ],
+      height: 1 
+    },
+    bookmarks: {
+      bg: 'green',
+      fg: 'white',
+      content: [
+        '{bold}Bookmarks:{/} [↑↓]Navigate  [Enter]Select  [D]Delete  [Esc]Close'
+      ],
+      height: 1  
+    },
+    history: {
+      bg: 'yellow',
+      fg: 'black',
+      content: [
+        '{bold}History:{/} [↑↓]Navigate  [Enter]Select [Esc]Close'
+      ],
+      height: 1  
+    }
+  };
+  
+  const style = pageStyles[pageType] || pageStyles.main;
   
   try {
     logger?.debug('Creating footer', {
+      pageType,
       position: 'bottom:0',
       height: 3,
-      sections: ['Navigation', 'Links', 'Tabs']
+      style
     });
 
     return blessed.box({
       name: 'footerBox',
       bottom: 0,
-      height: 3,
+      height: style.height,
       width: '100%',
       tags: true,
-      content: [
-        '{bold}Nav:{/} [N]ewURL  [B]ack  [F]orward  [R]eload  [S]earch  [H]istory\n' +
-        '{bold}Links:{/} [K]Next  [J]Prev  [Enter]Open  [M]Bookmarks\n' +
-        '{bold}Tabs:{/} [T]New  [W]Close  [1-9]Switch  [Tab]Cycle  [Q]uit',
-      ].join(' | '),
+      content: style.content.join('\n'),
       style: {
-        bg: 'blue',
-        fg: 'white'
+        bg: style.bg,
+        fg: style.fg
       },
-
       input: false,
       clickable: false,
       focusable: false,

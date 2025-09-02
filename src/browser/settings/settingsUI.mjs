@@ -1,6 +1,7 @@
 import blessed from 'blessed';
 import { bindKey } from '../../renderers/tuiRenderer/tuiHandlers.mjs';
 import { SEARCH_ENGINES, USER_AGENTS, TIME_FORMATS } from '../../constants/settingsConfig.mjs';
+import { createFooter } from '../../renderers/tuiRenderer/tuiComponents.mjs';
 
 export class settingsUI {
   constructor(browser, screen, logger) {
@@ -10,6 +11,7 @@ export class settingsUI {
     this.overlay = null;
     this.settingsList = null;
     this.activePopup = null;
+    this.footer = null;
   }
 
   show(settings, onSave, onReset) {
@@ -18,12 +20,16 @@ export class settingsUI {
       return;
     }
 
+    this.footer = createFooter('settings');
+    this.screen.append(this.footer);
+
     this.browser.isModalOpen = true;
     this.createOverlay();
     this.createSettingsList(settings);
-    this.createHelpText();
     this.bindEvents(onSave, onReset); 
     this.settingsList.focus();
+
+    this.footer.setFront();
 
     this.screen.render();
   }
@@ -46,14 +52,6 @@ export class settingsUI {
       content: 'Settings',
       style: { fg: 'cyan', bold: true }
     });
-
-    blessed.text({
-      parent: this.overlay,
-      bottom: 3,
-      left: 'center',
-      content: 'Enter: Edit • S: Ctrl-Save • D: Reset • Esc: Close',
-      style: { fg: 'gray' }
-    });
   }
 
   createSettingsList(settings) {
@@ -62,7 +60,7 @@ export class settingsUI {
       top: 3,
       left: 'center',
       width: '80%',
-      height: '70%',
+      height: '55%',
       border: { type: 'line' },
       style: {
         border: { fg: 'cyan' },
@@ -76,16 +74,6 @@ export class settingsUI {
     });
 
     this.updateDisplay(settings);
-  }
-
-  createHelpText() {
-    this.helpText = blessed.text({
-      parent: this.overlay,
-      bottom: 3,
-      left: 'center',
-      content: 'Enter: Edit • Ctrl-S: Save • D: Reset • Esc: Close',
-      style: { fg: 'gray' }
-    });
   }
 
   updateDisplay(settings) {
@@ -126,7 +114,7 @@ export class settingsUI {
 
     bindKey(this.settingsList, ['escape'], () => {
       if (this.activePopup) return;  
-      this.close();
+      this.cleanup();
     });
   }
 
@@ -368,20 +356,27 @@ export class settingsUI {
     return button;
   }
 
-  close() {
+  cleanup() {
+    this.logger?.debug("Cleaning up settings UI resources");
+
     if (this.activePopup) {
-      this.activePopup.destroy();
-      this.activePopup = null;
+        this.activePopup.destroy();
+        this.activePopup = null;
     }
 
     if (this.settingsList) {
-      this.settingsList.removeAllListeners();
-      this.settingsList = null;
+        this.settingsList.removeAllListeners();
+        this.settingsList = null;
     }
     
     if (this.overlay) {
-      this.overlay.destroy();
-      this.overlay = null;
+        this.overlay.destroy();
+        this.overlay = null;
+    }
+    
+    if (this.footer) {
+        this.footer.destroy();
+        this.footer = null;
     }
     
     this.browser.isModalOpen = false;

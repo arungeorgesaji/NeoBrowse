@@ -1,7 +1,7 @@
 import blessed from 'blessed';
 import chalk from 'chalk';
 import { extractText } from '../../utils/domHelpers.mjs';
-import { createScreen, createTabBar, createContainer, createHeader, createFooter, createURLTextbox, createSearchTextbox } from './tuiComponents.mjs';
+import { createScreen, createTabBar, createContainer, createHeader, createURLTextbox, createSearchTextbox } from './tuiComponents.mjs';
 import { setupHandlers } from './tuiHandlers.mjs';
 import { processContentWithLinks } from './tuiUtils.mjs';
 import { getLogger } from '../../utils/logger.mjs'; 
@@ -85,11 +85,10 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
     }
 
     const header = createHeader(pageTitle);
-    const footer = createFooter();
     const urlInput = createURLTextbox();
     const searchInput = createSearchTextbox();
 
-    const components = [header, tabBar, container, footer, urlInput, searchInput];
+    const components = [header, tabBar, container, urlInput, searchInput];
     components.forEach(component => {
       try {
         logger?.debug(`Appending component: ${component.type}`);

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
 import { getLogger } from '../utils/logger.mjs'; 
+import { createFooter } from '../renderers/tuiRenderer/tuiComponents.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,6 +18,7 @@ export class bookmarkManager {
     this.logger = getLogger();
     this.bookmarks = [];
     this.overlay = null;
+    this.footer = null;
 
     this.logger?.info("Bookmark manager initialized");
     this.loadBookmarks();
@@ -53,7 +55,7 @@ export class bookmarkManager {
     if (!url) {
       this.logger?.warn("Attempted to bookmark with no URL");
       if (!this.browser.isModalOpen) {
-        this.showWarning('No URL to bookmark');
+        this.browser.showWarning('No URL to bookmark');
       }
       return;
     }
@@ -63,11 +65,11 @@ export class bookmarkManager {
       this.saveBookmarks();
       this.logger?.info(`Added bookmark: "${title}" (${url})`);
       if (!this.browser.isModalOpen) {
-        this.showWarning(`Bookmark added: ${title}`);
+        this.browser.showWarning(`Bookmark added: ${title}`);
       }
     } else {
       this.logger?.debug(`Bookmark already exists: ${url}`);
-      if (!this.browser.isModalOpen) this.showWarning('Already bookmarked');
+      if (!this.browser.isModalOpen) this.browser.showWarning('Already bookmarked');
     }
   }
 
@@ -93,6 +95,11 @@ export class bookmarkManager {
     this.browser.isModalOpen = true;
 
     try {
+      this.browser.currentPageType = 'bookmarks';
+
+      this.footer = createFooter('bookmarks');
+      this.screen.append(this.footer);
+
       const bookmarks = this.bookmarks;
       const currentUrl = this.browser.activeTab?.currentUrl;
       const hasCurrentUrl = currentUrl && !bookmarks.some(b => b.url === currentUrl);
@@ -139,6 +146,8 @@ export class bookmarkManager {
         align: 'center',
         valign: 'middle'
       });
+
+      this.footer.setFront();
 
       bookmarks.forEach((b, index) => {
         const displayTitle = b.title || b.url;
@@ -192,20 +201,23 @@ export class bookmarkManager {
         style: { fg: 'cyan', bold: true }
       });
 
-      blessed.text({
-        parent: this.overlay,
-        bottom: 1,
-        left: 1,
-        content: 'Enter: Open • D: Delete • Esc: Close • Arrows: Navigate',
-        style: { fg: 'gray' }
-      });
-
-      bindKey(this.screen, ['escape'], () => {
+      const cleanup = () => {
         this.logger?.debug("Closing bookmarks modal");
         this.overlay.destroy();
+        if (this.footer) {
+          this.footer.destroy();
+          this.footer = null;
+        }
         this.browser.isModalOpen = false;
+
+        this.browser.currentPageType = 'main';
+        this.browser.footer = createFooter('main');
+        this.screen.append(this.browser.footer);
+        this.browser.footer.setFront();
         this.screen.render();
-      });
+      };
+
+      bindKey(this.screen, ['escape'], cleanup)
 
       bindKey(this.screen, ['enter'], async () => {
         const selected = list.selected;

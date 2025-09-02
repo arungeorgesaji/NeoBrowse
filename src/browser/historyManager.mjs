@@ -1,6 +1,7 @@
 import blessed from 'blessed';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
 import { getLogger } from '../utils/logger.mjs'; 
+import { createFooter } from '../renderers/tuiRenderer/tuiComponents.mjs';
 
 export class historyManager {
   constructor(browseInstance, screen) {
@@ -10,6 +11,7 @@ export class historyManager {
     this.overlay = null;
     this.historyList = null;
     this.closeCallback = null;
+    this.footer = null;
 
     this.logger?.info("History manager initialized");
   }
@@ -34,6 +36,9 @@ export class historyManager {
       }
 
       this.logger?.info(`Displaying history (${tab.history.length} items)`);
+
+      this.footer = createFooter('history');
+      this.screen.append(this.footer);
       
       this.overlay = blessed.box({
         parent: this.screen,
@@ -84,14 +89,8 @@ export class historyManager {
         content: `History (${tab.history.length} items)`,
         style: { fg: 'cyan', bold: true }
       });
-      
-      blessed.text({
-        parent: this.overlay,
-        bottom: 1,
-        left: 1,
-        content: 'Enter: Select • Esc: Close • Arrows: Navigate',
-        style: { fg: 'gray' }
-      });
+
+      this.footer.setFront();
       
       const handleSelect = async (item, index) => {
         this.logger?.debug(`Selected history item ${index}: ${tab.history[index]}`);
@@ -149,7 +148,7 @@ export class historyManager {
       this.cleanup();
     }
   }
-  
+
   cleanup() {
     this.logger?.debug("Cleaning up history manager resources");
 
@@ -162,6 +161,18 @@ export class historyManager {
       this.overlay.destroy();
       this.overlay = null;
     }
+    
+    // Add footer cleanup and restoration
+    if (this.footer) {
+      this.footer.destroy();
+      this.footer = null;
+    }
+    
+    // Restore main footer
+    this.browser.currentPageType = 'main';
+    this.browser.footer = createFooter('main');
+    this.screen.append(this.browser.footer);
+    this.browser.footer.setFront();
     
     if (this.closeCallback) {
       this.logger?.debug("Executing history close callback");

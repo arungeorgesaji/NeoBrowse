@@ -11,9 +11,33 @@ export class warningManager {
     this.lastWarningMessage = null;
     this.warningStartTime = null;
     this.warningDuration = null;
+    this.pageTypeGetter = options.pageTypeGetter || (() => options.pageType || 'main');
   }
 
-  showWarning(message, duration = this.defaultDuration) {
+  updateScreen(newScreen, pageType = 'main') {
+    this.screen = newScreen;
+    this.currentPageType = pageType;
+    this.clearWarning();
+  }
+
+  setPageType(pageType) {
+    this.currentPageType = pageType;
+  }
+  
+  getWarningStyle() {
+    const pageType = this.pageTypeGetter();
+    const warningStyles = {
+      main: chalk.bgYellow.black,        
+      bookmarks: chalk.bgMagenta.white,  
+      settings: chalk.bgCyan.black,      
+      history: chalk.bgBlue.white,       
+      default: chalk.bgRed.white         
+    };
+
+    return warningStyles[pageType] || warningStyles.default;
+  }
+
+  showWarning(message, duration = this.defaultDuration, pageType = null) {
     if (this.warningTimeout) {
       clearTimeout(this.warningTimeout);
       this.warningTimeout = null;
@@ -29,26 +53,40 @@ export class warningManager {
       this.originalFooterContent = footer.content;
     }
 
-    footer.setContent(chalk.bgYellow.black(` ${message} `));
+    const effectivePageType = pageType || this.currentPageType;
+    const warningStyler = this.getWarningStyle(effectivePageType);
+    
+    footer.setContent(warningStyler(` ${message} `));
     this.screen.render();
     
     this.lastWarningMessage = message;
     this.warningStartTime = Date.now();
     this.warningDuration = duration;
     
-    this.logger?.info(`Showing warning: ${message}`);
-
+    this.logger?.info(`Showing warning: ${message} (style: ${effectivePageType})`);
     this.warningTimeout = setTimeout(() => {
       this.restoreFooter(footer);
     }, duration);
-
+    
     return true;
   }
 
   findFooter() {
-    return this.screen.children.find(
+    if (!this.screen) return null;
+    
+    const footers = this.screen.children.filter(
       child => child.type === 'box' && child.position.bottom === 0
     );
+    
+    if (footers.length > 1) {
+      return footers.reduce((latest, current) => {
+        const currentIndex = this.screen.children.indexOf(current);
+        const latestIndex = this.screen.children.indexOf(latest);
+        return currentIndex > latestIndex ? current : latest;
+      });
+    }
+    
+    return footers[0] || null;
   }
 
   restoreFooter(footer) {
@@ -79,7 +117,8 @@ export class warningManager {
     
     return {
       message: this.lastWarningMessage,
-      remainingTime: this.getRemainingWarningTime()
+      remainingTime: this.getRemainingWarningTime(),
+      pageType: this.currentPageType
     };
   }
 
