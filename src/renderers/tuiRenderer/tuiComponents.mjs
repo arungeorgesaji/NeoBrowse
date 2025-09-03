@@ -165,7 +165,7 @@ export function createFooter(pageType = 'main') {
       bg: 'green',
       fg: 'white',
       content: [
-        '{bold}Bookmarks:{/} [↑↓]Navigate  [Enter]Select  [D]Delete  [Esc]Close'
+        '{bold}Bookmarks:{/} [↑↓]Navigate  [Enter]Select  [x]Delete  [Esc]Close'
       ],
       height: 1  
     },

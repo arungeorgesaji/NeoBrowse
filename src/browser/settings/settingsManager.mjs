@@ -10,7 +10,6 @@ export class settingsManager {
     this.browser = browserInstance;
     this.screen = screen;
     this.logger = getLogger();
-    this.warningTimeout = null;
     this.warningManager = new warningManager(this.screen, { pageTypeGetter: () => 'settings' });
 
     this.storage = new settingsStorage(this.logger);

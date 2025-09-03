@@ -2,16 +2,18 @@ import blessed from 'blessed';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
 import { getLogger } from '../utils/logger.mjs'; 
 import { createFooter } from '../renderers/tuiRenderer/tuiComponents.mjs';
+import { warningManager } from '../utils/warningManager.mjs';
 
 export class historyManager {
   constructor(browseInstance, screen) {
-    this.browse = browseInstance;
+    this.browser = browseInstance;
     this.screen = screen;
     this.logger = getLogger();
     this.overlay = null;
     this.historyList = null;
     this.closeCallback = null;
     this.footer = null;
+    this.warningManager = new warningManager(this.screen, { pageTypeGetter: () => 'history' });
 
     this.logger?.info("History manager initialized");
   }
@@ -19,18 +21,18 @@ export class historyManager {
   showHistory(closeCallback) {
     try {
       this.closeCallback = closeCallback;
-      const tab = this.browse.activeTab;
+      const tab = this.browser.activeTab;
 
       if (!tab?.history) {
         this.logger?.warn("No tab or history available"); 
-        this.browse.showWarning("No history available");
+        this.warningManager.showWarning("No history available");
         if (this.closeCallback) this.closeCallback();
         return;
       }
     
       if (tab.history.length === 0) {
         this.logger?.debug("Empty history for current tab"); 
-        this.browse.showWarning("No history available");
+        this.warningManager.showWarning("No history available");
         if (this.closeCallback) this.closeCallback();
         return;
       }
@@ -97,11 +99,11 @@ export class historyManager {
 
         try {
           this.cleanup();
-          const tab = this.browse.activeTab;
+          const tab = this.browser.activeTab;
 
           if (index === tab.currentIndex) {
             this.logger?.debug("Selected current page in history");
-            this.browse.showWarning("You're already on this page!");
+            this.warningManager.showWarning("You're already on this page!");
             return;
           }
 
@@ -112,7 +114,7 @@ export class historyManager {
 
           this.logger?.info(`Navigated to history item ${index}`);
  
-          this.browse.refreshUI({
+          this.browser.refreshUI({
             document: tab.currentDocument,
             url: tab.currentUrl,
             title: tab.currentDocument?.title || tab.currentUrl || 'New Tab'
@@ -122,7 +124,7 @@ export class historyManager {
             index,
             url: tab.history[index]
           });
-          this.browse.showWarning('Failed to navigate to selected URL');
+          this.warningManager.showWarning('Failed to navigate to selected URL');
         }
       };
       
@@ -144,7 +146,7 @@ export class historyManager {
     } catch (err) {
       this.logger?.error(`History screen error: ${err.message}`);
       console.error('History screen error:', err);
-      this.browse.showWarning('Failed to show history');
+      this.warningManager.showWarning('Failed to show history');
       this.cleanup();
     }
   }
@@ -162,15 +164,12 @@ export class historyManager {
       this.overlay = null;
     }
     
-    // Add footer cleanup and restoration
     if (this.footer) {
       this.footer.destroy();
       this.footer = null;
     }
     
-    // Restore main footer
     this.browser.currentPageType = 'main';
-    this.browser.footer = createFooter('main');
     this.screen.append(this.browser.footer);
     this.browser.footer.setFront();
     

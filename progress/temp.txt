@@ -1,3 +1,4 @@
 Actually integrate settings
 Add support for files
-Integrate warningSystem to settings and bookmarks
+Fix warnings in history and bookmarks
+Fix deletion in bookmarks

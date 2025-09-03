@@ -7,6 +7,7 @@ import { dirname } from 'path';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs'
 import { getLogger } from '../utils/logger.mjs'; 
 import { createFooter } from '../renderers/tuiRenderer/tuiComponents.mjs';
+import { warningManager } from '../utils/warningManager.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,6 +20,7 @@ export class bookmarkManager {
     this.bookmarks = [];
     this.overlay = null;
     this.footer = null;
+    this.warningManager = new warningManager(this.screen, { pageTypeGetter: () => 'bookmarks' });
 
     this.logger?.info("Bookmark manager initialized");
     this.loadBookmarks();
@@ -49,13 +51,13 @@ export class bookmarkManager {
   }
 
   addBookmark(url, title) {
-    if (!url) url = this.activeTab?.currentUrl;
-    if (!title) title = this.activeTab?.currentDocument?.title || url;
+    if (!url) url = this.browser.activeTab?.currentUrl;
+    if (!title) title = this.browser.activeTab?.currentDocument?.title || url;
     
     if (!url) {
       this.logger?.warn("Attempted to bookmark with no URL");
       if (!this.browser.isModalOpen) {
-        this.browser.showWarning('No URL to bookmark');
+        this.warningManager.showWarning('No URL to bookmark');
       }
       return;
     }
@@ -64,12 +66,10 @@ export class bookmarkManager {
       this.bookmarks.push({ url, title });
       this.saveBookmarks();
       this.logger?.info(`Added bookmark: "${title}" (${url})`);
-      if (!this.browser.isModalOpen) {
-        this.browser.showWarning(`Bookmark added: ${title}`);
-      }
+      this.warningManager.showWarning(`Bookmark added: ${title}`);
     } else {
       this.logger?.debug(`Bookmark already exists: ${url}`);
-      if (!this.browser.isModalOpen) this.browser.showWarning('Already bookmarked');
+      if (!this.browser.isModalOpen) this.warningManager.showWarning('Already bookmarked');
     }
   }
 
@@ -100,9 +100,8 @@ export class bookmarkManager {
       this.footer = createFooter('bookmarks');
       this.screen.append(this.footer);
 
-      const bookmarks = this.bookmarks;
       const currentUrl = this.browser.activeTab?.currentUrl;
-      const hasCurrentUrl = currentUrl && !bookmarks.some(b => b.url === currentUrl);
+      const hasCurrentUrl = currentUrl && !this.bookmarks.some(b => b.url === currentUrl);
 
       this.overlay = blessed.box({
         parent: this.screen,
@@ -149,13 +148,13 @@ export class bookmarkManager {
 
       this.footer.setFront();
 
-      bookmarks.forEach((b, index) => {
+      this.bookmarks.forEach((b, index) => {
         const displayTitle = b.title || b.url;
         list.addItem(`${chalk.bold(`${index + 1}. ${displayTitle}`)}`);
       });
 
       if (currentUrl) {
-        const isBookmarked = bookmarks.some(b => b.url === currentUrl);
+        const isBookmarked = this.bookmarks.some(b => b.url === currentUrl);
         if (isBookmarked) {
           list.addItem(chalk.yellow('✓ Current page is bookmarked'));
         } else {
@@ -163,19 +162,19 @@ export class bookmarkManager {
         }
       }
 
-      if (bookmarks.length === 0 && !hasCurrentUrl) {
+      if (this.bookmarks.length === 0 && !hasCurrentUrl) {
         list.addItem(chalk.yellow('No bookmarks yet'));
         list.addItem(chalk.dim('Visit a page first to bookmark it'));
       }
 
       const updateUrlDisplay = () => {
         const selected = list.selected;
-        if (selected >= 0 && selected < bookmarks.length) {
-          const bookmark = bookmarks[selected];
+        if (selected >= 0 && selected < this.bookmarks.length) {
+          const bookmark = this.bookmarks[selected];
           const truncateUrl = bookmark.url.length > 100 ? 
             bookmark.url.substring(0, 97) + '...' : bookmark.url;
           urlDisplay.setContent(chalk.cyan(truncateUrl));
-        } else if (hasCurrentUrl && selected === bookmarks.length) {
+        } else if (hasCurrentUrl && selected === this.bookmarks.length) {
           const truncateUrl = currentUrl.length > 100 ? 
             currentUrl.substring(0, 97) + '...' : currentUrl;
           urlDisplay.setContent(chalk.green(truncateUrl));
@@ -189,7 +188,7 @@ export class bookmarkManager {
       list.on('focus', updateUrlDisplay);
       list.on('move', updateUrlDisplay);
       
-      if (bookmarks.length > 0) {
+      if (this.bookmarks.length > 0) {
         setTimeout(updateUrlDisplay, 50);
       }
       
@@ -197,7 +196,7 @@ export class bookmarkManager {
         parent: this.overlay,
         top: 1,
         left: 'center',
-        content: `Bookmarks (${bookmarks.length})`,
+        content: `Bookmarks (${this.bookmarks.length})`,
         style: { fg: 'cyan', bold: true }
       });
 
@@ -221,13 +220,13 @@ export class bookmarkManager {
 
       bindKey(this.screen, ['enter'], async () => {
         const selected = list.selected;
-        if (selected >= 0 && selected < bookmarks.length) {
-          const bookmark = bookmarks[selected];
+        if (selected >= 0 && selected < this.bookmarks.length) {
+          const bookmark = this.bookmarks[selected];
           this.logger?.info(`Navigating to bookmarked URL: ${bookmark.url}`);
           this.overlay.destroy();
           this.browser.isModalOpen = false;
           await this.browser.navigate(bookmark.url);
-        } else if (hasCurrentUrl && selected === bookmarks.length) {
+        } else if (hasCurrentUrl && selected === this.bookmarks.length) {
           this.logger?.debug("Adding current page to bookmarks from modal");
           await this.browser.addCurrentToBookmarks();
           this.overlay.destroy();
@@ -236,10 +235,10 @@ export class bookmarkManager {
         }
       });
 
-      bindKey(this.screen, ['d'], async () => {
+      bindKey(this.screen, ['x'], async () => {
         const selected = list.selected;
-        if (selected >= 0 && selected < bookmarks.length) {
-            const bookmark = bookmarks[selected];
+        if (selected >= 0 && selected < this.bookmarks.length) {
+            const bookmark = this.bookmarks[selected];
             this.logger?.info(`Deleting bookmark: "${bookmark.title}" (${bookmark.url})`);
             this.removeBookmark(bookmark.url);
             
@@ -251,13 +250,13 @@ export class bookmarkManager {
         }
       });
 
-      this.logger?.info(`Displaying ${bookmarks.length} bookmarks in modal`);
+      this.logger?.info(`Displaying ${this.bookmarks.length} bookmarks in modal`);
       this.screen.render();
       list.focus();
     } catch (err) {
       this.logger?.error(`Bookmarks modal error: ${err.message}`);
       this.browser.isModalOpen = false;
-      this.browser.showWarning('Failed to load bookmarks');
+      this.warningManager.showWarning('Failed to load bookmarks');
     }
   }
 }
