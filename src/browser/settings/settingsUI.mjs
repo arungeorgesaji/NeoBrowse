@@ -311,28 +311,28 @@ export class settingsUI {
       content: message,
       style: { fg: 'white', bold: true }
     });
-
-    const yesBtn = this.createButton(popup, 'Yes', '30%-6', 'red', () => {
-      popup.destroy();
-      this.activePopup = null;
-      onConfirm();
-    });
-
-    const noBtn = this.createButton(popup, 'No', '70%-6', 'gray', () => {
+    
+    const noBtn = this.createButton(popup, 'No', '30%-6', 'gray', () => {
       popup.destroy();
       this.activePopup = null;
       this.settingsList.focus();
     });
 
-    bindKey(yesBtn, ['right'], () => noBtn.focus());
-    bindKey(noBtn, ['left'], () => yesBtn.focus());
+    const yesBtn = this.createButton(popup, 'Yes', '70%-6', 'red', () => {
+      popup.destroy();
+      this.activePopup = null;
+      onConfirm();
+    });
+
+    bindKey(yesBtn, ['left'], () => noBtn.focus());
+    bindKey(noBtn, ['right'], () => yesBtn.focus());
     bindKey(popup, ['escape'], () => {
       popup.destroy();
       this.activePopup = null;
       this.settingsList.focus();
     });
 
-    yesBtn.focus();
+    noBtn.focus();
     this.browser.currentScreen.render();
   }
 
@@ -345,9 +345,8 @@ export class settingsUI {
       height: 1,
       content: `{center}${text}{/center}`,
       style: {
-        bg: color,
         fg: 'white',
-        focus: { bg: `dark${color}` }
+        focus: { bg: color }
       },
       tags: true
     });

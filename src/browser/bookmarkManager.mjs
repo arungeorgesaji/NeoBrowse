@@ -20,6 +20,7 @@ export class bookmarkManager {
     this.bookmarks = [];
     this.overlay = null;
     this.footer = null;
+    this.activePopup = null;
     this.warningManager = new warningManager(this.screen, { pageTypeGetter: () => 'bookmarks' });
 
     this.logger?.info("Bookmark manager initialized");
@@ -88,7 +89,7 @@ export class bookmarkManager {
   async showBookmarks() {
     if (this.browser.isModalOpen) {
       this.logger?.debug("Skipping bookmarks modal (another modal is open)");
-      return
+      return;
     }
     
     this.logger?.debug("Opening bookmarks modal");
@@ -216,7 +217,7 @@ export class bookmarkManager {
         this.screen.render();
       };
 
-      bindKey(this.screen, ['escape'], cleanup)
+      bindKey(this.screen, ['escape'], cleanup);
 
       bindKey(this.screen, ['enter'], async () => {
         const selected = list.selected;
@@ -238,13 +239,8 @@ export class bookmarkManager {
       bindKey(this.screen, ['x'], async () => {
         const selected = list.selected;
         if (selected >= 0 && selected < this.bookmarks.length) {
-            const bookmark = this.bookmarks[selected];
-            this.logger?.info(`Deleting bookmark: "${bookmark.title}" (${bookmark.url})`);
-            this.removeBookmark(bookmark.url);
-            
-            this.overlay.destroy();
-            this.browser.isModalOpen = false;
-            await this.showBookmarks(); 
+          const bookmark = this.bookmarks[selected];
+          this.showDeleteConfirmation(bookmark);
         } else {
           this.logger?.debug("No bookmark selected for deletion");
         }
@@ -258,5 +254,103 @@ export class bookmarkManager {
       this.browser.isModalOpen = false;
       this.warningManager.showWarning('Failed to load bookmarks');
     }
+  }
+
+  showDeleteConfirmation(bookmark) {
+    if (this.activePopup) return;
+
+    const popup = blessed.box({
+      parent: this.overlay,
+      top: 'center',
+      left: 'center',
+      width: 50,
+      height: 8,
+      border: { type: 'line' },
+      style: {
+        border: { fg: 'red' },
+        bg: 'black'
+      }
+    });
+    this.activePopup = popup;
+
+    const title = bookmark.title || bookmark.url;
+    const truncatedTitle = title.length > 30 ? title.substring(0, 27) + '...' : title;
+
+    blessed.text({
+      parent: popup,
+      top: 1,
+      left: 'center',
+      content: `Delete "${truncatedTitle}"?`,
+      style: { fg: 'white', bold: true }
+    });
+
+    const noBtn = this.createButton(popup, 'No', '30%-6', 'gray', () => {
+      popup.destroy();
+      this.activePopup = null;
+      this.screen.render();
+    });
+
+    const yesBtn = this.createButton(popup, 'Yes', '70%-6', 'red', () => {
+      this.logger?.info(`Deleting bookmark: "${bookmark.title}" (${bookmark.url})`);
+      this.removeBookmark(bookmark.url);
+      popup.destroy();
+      this.activePopup = null;
+      
+      this.overlay.destroy();
+      this.browser.isModalOpen = false;
+      this.showBookmarks();
+    });
+
+    bindKey(yesBtn, ['left'], () => noBtn.focus());
+    bindKey(noBtn, ['right'], () => yesBtn.focus());
+    bindKey(popup, ['escape'], () => {
+      popup.destroy();
+      this.activePopup = null;
+      this.screen.render();
+    });
+
+    noBtn.focus();
+    this.screen.render();
+  }
+
+  createButton(parent, text, left, color, onClick) {
+    const button = blessed.button({
+      parent,
+      top: 5,
+      left,
+      width: 12,
+      height: 1,
+      content: `{center}${text}{/center}`,
+      style: {
+        fg: 'white',
+        focus: { bg: color }
+      },
+      tags: true
+    });
+
+    button.on('press', onClick);
+    return button;
+  }
+
+  cleanup() {
+    this.logger?.debug("Cleaning up bookmark manager resources");
+
+    if (this.activePopup) {
+      this.activePopup.destroy();
+      this.activePopup = null;
+    }
+
+    if (this.overlay) {
+      this.overlay.destroy();
+      this.overlay = null;
+    }
+    
+    if (this.footer) {
+      this.footer.destroy();
+      this.footer = null;
+    }
+    
+    this.browser.isModalOpen = false;
+    this.screen?.render();
   }
 }

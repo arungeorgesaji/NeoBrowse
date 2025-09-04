@@ -2,3 +2,5 @@ Actually integrate settings
 Add support for files
 Fix warnings in history and bookmarks
 Fix deletion in bookmarks
+Test reset settings
+Find why focus doesnt work
