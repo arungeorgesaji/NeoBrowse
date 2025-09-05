@@ -38,8 +38,14 @@ export function setupHandlers({
   links,
   updateTabItems,
   content,
+  browseInstance 
 }) {
   const logger = getLogger();
+
+  const isMainPage = () => {
+    const pageType = browseInstance?.currentPageType || 'main';
+    return pageType === 'main';  
+  };
 
   logger?.info('Setting up keyboard handlers', {
     hasOnNavigate: !!onNavigate,
@@ -56,6 +62,8 @@ export function setupHandlers({
   });
   
   bindKey(screen, ['n'], () => {
+    if (!isMainPage()) return;
+
     logger?.debug('URL input triggered');
     urlInput.show();
     urlInput.focus();
@@ -77,21 +85,29 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['b'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('Back navigation triggered');
     onNavigate('back');
   });
 
   bindKey(screen, ['f'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('Forward navigation triggered');
     onNavigate('forward');
   });
 
   bindKey(screen, ['r'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('Reload triggered');
     onNavigate('reload');
   });
 
   bindKey(screen, ['h'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('History command triggered');
     if (tabOptions.onShowHistory) {
       tabOptions.onShowHistory();
@@ -99,6 +115,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['m'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('Bookmarks command triggered');
     if (tabOptions.onShowBookmarks) {
       tabOptions.onShowBookmarks();
@@ -106,6 +124,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['s'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('Search input triggered');
     searchInput.show();
     searchInput.focus();
@@ -128,6 +148,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['M-s'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('Settings command triggered');
     if (tabOptions.onShowSettings) {
       tabOptions.onShowSettings();
@@ -135,6 +157,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['t'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('New tab command triggered');
     if (tabOptions.onNewTab) {
       tabOptions.onNewTab();
@@ -145,6 +169,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['w'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('Close tab command triggered');
     if (tabOptions.onCloseTab) {
       tabOptions.onCloseTab();
@@ -155,6 +181,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['tab'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('Switch tab command triggered');
     if (tabOptions.onSwitchTab) {
       const tabs = tabOptions.tabs || [];
@@ -176,6 +204,8 @@ export function setupHandlers({
 
   for (let i = 0; i < 9; i++) {
     bindKey(screen, [`${i + 1}`], () => {  
+      if (!isMainPage()) return; 
+
       logger?.debug(`Tab ${i + 1} shortcut triggered`);
       if (tabOptions.onSwitchTab && i < tabOptions.tabs?.length) {
         logger?.debug(`Switching to tab ${i}`);
@@ -187,6 +217,8 @@ export function setupHandlers({
   }
 
   bindKey(screen, ['k', 'right'], () => {
+    if (!isMainPage()) return; 
+
     if (links.length === 0) {
       logger?.debug('No links available for navigation');
       return;
@@ -203,6 +235,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['j', 'left'], () => {
+    if (!isMainPage()) return; 
+
     if (links.length === 0) {
       logger?.debug('No links available for navigation');
       return;
@@ -219,6 +253,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['enter'], () => {
+    if (!isMainPage()) return; 
+
     if (focusedLinkIndex >= 0 && focusedLinkIndex < links.length) {
       const link = links[focusedLinkIndex];
       logger?.info('Following link', {
@@ -235,6 +271,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['up', 'down'], (ch, key) => {
+    if (!isMainPage()) return; 
+ 
     logger?.debug('Scrolling', {
       direction: key.name,
       lines: 1
@@ -244,6 +282,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['pageup', 'pagedown'], (ch, key) => {
+    if (!isMainPage()) return; 
+
     const scrollAmount = Math.floor(container.height / 2);
     logger?.debug('Page scrolling', {
       direction: key.name,
@@ -254,6 +294,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['space'], () => {
+    if (!isMainPage()) return; 
+ 
     const scrollAmount = container.height;
     logger?.debug('Space scrolling', {
       direction: 'down',
@@ -264,6 +306,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['M-space'], () => {
+    if (!isMainPage()) return; 
+
     const scrollAmount = container.height;
     logger?.debug('Meta-space scrolling', {
       direction: 'up',
@@ -274,18 +318,24 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['home', 'g'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('Scrolling to top');
     container.scrollTo(0);
     screen.render();
   });
 
   bindKey(screen, ['end', 'M-g'], () => {
+    if (!isMainPage()) return; 
+
     logger?.debug('Scrolling to bottom');
     container.scrollTo(Infinity); 
     screen.render();
   });
 
   bindKey(screen, ['d'], () => {
+    if (!isMainPage()) return; 
+
     const scrollAmount = Math.floor(container.height / 2);
     logger?.debug('Half-page scrolling down', { amount: scrollAmount });
     container.scroll(scrollAmount);
@@ -293,6 +343,8 @@ export function setupHandlers({
   });
 
   bindKey(screen, ['u'], () => {
+    if (!isMainPage()) return; 
+
     const scrollAmount = Math.floor(container.height / 2);
     logger?.debug('Half-page scrolling up', { amount: scrollAmount });
     container.scroll(-scrollAmount);

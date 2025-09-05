@@ -269,7 +269,7 @@ export class bookmarkManager {
       style: {
         border: { fg: 'red' },
         bg: 'black'
-      }
+      },
     });
     this.activePopup = popup;
 

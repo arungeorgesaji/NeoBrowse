@@ -29,7 +29,6 @@ export class neoBrowse {
     this.currentPageType = 'main';
     this.warningManager = new warningManager(this.currentScreen, { pageTypeGetter: () => this.currentPageType });
 
-
     this.initManagers();
     this.initEventHandlers();
     this.logger?.info("Neobrowse instance initialized")
@@ -169,7 +168,6 @@ export class neoBrowse {
     return false;
   }
 
-
   async addCurrentToBookmarks() {
     if (!this.activeTab) {
       this.logger?.warn("No active tab to bookmark");
@@ -195,11 +193,12 @@ export class neoBrowse {
       return;
     } 
     
-    this.isModalOpen = true;
+    this.currentPageType = 'history'; 
     this.logger?.debug("Opening history modal");
     
     const cleanup = () => {
       this.isModalOpen = false;
+      this.currentPageType = 'main';
       this.logger?.debug("Closed history modal");
       this.currentScreen?.render();
     };
@@ -207,8 +206,49 @@ export class neoBrowse {
     this.historyManager.showHistory(cleanup);
   }
 
+  showBookmarks() {
+    if (this.isModalOpen) {
+      this.logger?.warn("Cannot open bookmarks (modal already open)");
+      return;
+    }
+    
+    this.currentPageType = 'bookmarks'; 
+    this.logger?.debug("Opening bookmarks modal");
+    
+    const cleanup = () => {
+      this.isModalOpen = false;
+      this.currentPageType = 'main';
+      this.logger?.debug("Closed bookmarks modal");
+      this.currentScreen?.render();
+    };
+
+    this.bookmarkManager.showBookmarks(cleanup);
+  }
+
+  showSettings() {
+    if (this.isModalOpen) {
+      this.logger?.warn("Cannot open settings (modal already open)");
+      return;
+    }
+    
+    this.currentPageType = 'settings';
+    this.logger?.debug("Opening settings modal");
+    
+    const cleanup = () => {
+      this.isModalOpen = false;
+      this.currentPageType = 'main';
+      this.logger?.debug("Closed settings modal");
+      this.currentScreen?.render();
+    };
+
+    this.settingsManager.showSettings(cleanup);
+  }
+
   refreshUI(tabData) {
     this.logger?.debug("Refreshing UI with new tab data");
+
+    this.isModalOpen = false;
+    this.currentPageType = 'main';
 
     const wasDebugPanelVisible = this.debugPanel?.panel.hidden === false;
     const hadWarning = this.warningManager.hasActiveWarning();
@@ -234,9 +274,9 @@ export class neoBrowse {
         onCloseTab: () => this.closeCurrentTab(),
         onSwitchTab: (index) => this.switchTab(index),
         onShowHistory: () => this.showHistory(),
-        onShowBookmarks: () => this.bookmarkManager.showBookmarks(),
-        onShowSettings: () => this.settingsManager.showSettings(),
-        initialFragment: fragment,
+        onShowBookmarks: () => this.showBookmarks(),
+        onShowSettings: () => this.showSettings(),
+        browseInstance: this
       }
     );
 

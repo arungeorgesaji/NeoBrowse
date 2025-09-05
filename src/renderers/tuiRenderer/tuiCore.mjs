@@ -174,6 +174,7 @@ export function renderTUI(document, pageTitle, onNavigate, tabOptions = {}) {
         links,
         updateTabItems,
         content,
+        browseInstance: tabOptions.browseInstance, 
       });
     } catch (handlerError) {
       logger?.error('Handler setup failed', {
