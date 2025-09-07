@@ -104,6 +104,8 @@ export class settingsUI {
   }
 
   bindEvents(onSave, onReset) {
+    const isPopupOpen = () => this.activePopup !== null; 
+
     bindKey(this.settingsList, ['C-s'], () => {
       if (!this.activePopup) onSave();
     });
@@ -115,6 +117,10 @@ export class settingsUI {
     bindKey(this.settingsList, ['escape'], () => {
       if (this.activePopup) return;  
       this.cleanup();
+
+      if (this.browser.settingsManager) {
+        this.browser.settingsManager.cleanup();
+      }
     });
   }
 
@@ -326,7 +332,14 @@ export class settingsUI {
 
     bindKey(yesBtn, ['left'], () => noBtn.focus());
     bindKey(noBtn, ['right'], () => yesBtn.focus());
-    bindKey(popup, ['escape'], () => {
+
+    bindKey(yesBtn, ['escape'], () => {
+      popup.destroy();
+      this.activePopup = null;
+      this.settingsList.focus();
+    });
+
+    bindKey(noBtn, ['escape'], () => {
       popup.destroy();
       this.activePopup = null;
       this.settingsList.focus();
@@ -365,6 +378,7 @@ export class settingsUI {
 
     if (this.settingsList) {
         this.settingsList.removeAllListeners();
+        this.settingsList.destroy();
         this.settingsList = null;
     }
     
@@ -379,6 +393,6 @@ export class settingsUI {
     }
     
     this.browser.isModalOpen = false;
-    this.browser.currentScreen?.render();
+    this.screen?.render();
   }
 }

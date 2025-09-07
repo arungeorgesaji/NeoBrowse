@@ -91,6 +91,8 @@ export class bookmarkManager {
       this.logger?.debug("Skipping bookmarks modal (another modal is open)");
       return;
     }
+
+    const isConfirmationOpen = () => this.activePopup !== null;
     
     this.logger?.debug("Opening bookmarks modal");
     this.browser.isModalOpen = true;
@@ -217,9 +219,14 @@ export class bookmarkManager {
         this.screen.render();
       };
 
-      bindKey(this.screen, ['escape'], cleanup);
+      bindKey(this.screen, ['escape'], () => {
+        if (isConfirmationOpen()) return; 
+        cleanup();
+      });
 
       bindKey(this.screen, ['enter'], async () => {
+        if (isConfirmationOpen()) return; 
+
         const selected = list.selected;
         if (selected >= 0 && selected < this.bookmarks.length) {
           const bookmark = this.bookmarks[selected];
@@ -237,6 +244,8 @@ export class bookmarkManager {
       });
 
       bindKey(this.screen, ['x'], async () => {
+        if (isConfirmationOpen()) return; 
+
         const selected = list.selected;
         if (selected >= 0 && selected < this.bookmarks.length) {
           const bookmark = this.bookmarks[selected];
@@ -303,7 +312,14 @@ export class bookmarkManager {
 
     bindKey(yesBtn, ['left'], () => noBtn.focus());
     bindKey(noBtn, ['right'], () => yesBtn.focus());
-    bindKey(popup, ['escape'], () => {
+
+    bindKey(yesBtn, ['escape'], () => {
+      popup.destroy();
+      this.activePopup = null;
+      this.screen.render();
+    });
+
+    bindKey(noBtn, ['escape'], () => {
       popup.destroy();
       this.activePopup = null;
       this.screen.render();

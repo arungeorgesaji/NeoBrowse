@@ -4,6 +4,7 @@ import { settingsUI } from './settingsUI.mjs';
 import { DEFAULT_SETTINGS, SEARCH_ENGINES, USER_AGENTS, TIME_FORMATS } from '../../constants/settingsConfig.mjs';
 import { getLogger } from '../../utils/logger.mjs';
 import { warningManager } from '../../utils/warningManager.mjs';
+import { createFooter } from '../../renderers/tuiRenderer/tuiComponents.mjs';
 
 export class settingsManager {
   constructor(browserInstance, screen) {
@@ -191,7 +192,13 @@ export class settingsManager {
       if (this.saveSettings()) {
         this.warningManager.showWarning('Settings reset to defaults');
         this.logger?.info("Settings reset to defaults successfully");
-        this.ui.updateDisplay(this.currentSettings);
+
+        this.ui.cleanup();
+        this.browser.isModalOpen = false; 
+        
+        setTimeout(() => {
+          this.showSettings();
+        }, 50);
       } else {
         this.warningManager.showWarning('Failed to reset settings');
         this.logger?.error("Failed to save settings after reset");
