@@ -142,7 +142,6 @@ export class historyManager {
       
       this.historyList.focus();
       this.screen.render();
-      
     } catch (err) {
       this.logger?.error(`History screen error: ${err.message}`);
       console.error('History screen error:', err);

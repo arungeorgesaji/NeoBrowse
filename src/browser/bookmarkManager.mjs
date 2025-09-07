@@ -58,7 +58,9 @@ export class bookmarkManager {
     if (!url) {
       this.logger?.warn("Attempted to bookmark with no URL");
       if (!this.browser.isModalOpen) {
-        this.warningManager.showWarning('No URL to bookmark');
+        setTimeout(() => {
+          this.warningManager.showWarning('No URL to bookmark');
+        }, 1000);
       }
       return;
     }
@@ -67,10 +69,16 @@ export class bookmarkManager {
       this.bookmarks.push({ url, title });
       this.saveBookmarks();
       this.logger?.info(`Added bookmark: "${title}" (${url})`);
-      this.warningManager.showWarning(`Bookmark added: ${title}`);
+      setTimeout(() => {
+        this.warningManager.showWarning(`Bookmark added: ${title}`);
+      }, 1000);
     } else {
       this.logger?.debug(`Bookmark already exists: ${url}`);
-      if (!this.browser.isModalOpen) this.warningManager.showWarning('Already bookmarked');
+      if (!this.browser.isModalOpen) { 
+        setTimeout(() => {
+          this.warningManager.showWarning('Already bookmarked');
+        }, 1000);
+      }
     }
   }
 
@@ -261,7 +269,9 @@ export class bookmarkManager {
     } catch (err) {
       this.logger?.error(`Bookmarks modal error: ${err.message}`);
       this.browser.isModalOpen = false;
-      this.warningManager.showWarning('Failed to load bookmarks');
+      setTimeout(() => {
+        this.warningManager.showWarning('Failed to load bookmarks');
+      }, 1000);
     }
   }
 
@@ -301,9 +311,12 @@ export class bookmarkManager {
 
     const yesBtn = this.createButton(popup, 'Yes', '70%-6', 'red', () => {
       this.logger?.info(`Deleting bookmark: "${bookmark.title}" (${bookmark.url})`);
+      const deletedTitle = bookmark.title || bookmark.url;
       this.removeBookmark(bookmark.url);
       popup.destroy();
       this.activePopup = null;
+
+        this.warningManager.showWarning(`Bookmark deleted: ${deletedTitle}`);
       
       this.overlay.destroy();
       this.browser.isModalOpen = false;
