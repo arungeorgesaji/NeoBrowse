@@ -5,6 +5,7 @@ import dns from 'dns/promises'
 import fs from 'fs';
 import path from 'path';
 import { getLogger } from '../utils/logger.mjs'; 
+import { fileURLToPath } from 'url';
 
 export class Tab {
   constructor() {
@@ -56,17 +57,40 @@ export class Tab {
         const doc = parseHTML(htmlContent);
         
         this.currentDocument = doc;
+        this.currentUrl = url;
+        this.updateHistory(url, options);
 
         return {
           document: doc,
-          url: this.currentUrl,
+          url: url,
           title: doc.title || 'NeoBrowse Home',
           historyIndex: this.currentIndex,
           historyLength: this.history.length
         };
-      }
+      } else if (url.startsWith('file:///')) {
+        try {
+          this.logger?.info("Loading local file", { url });
 
-      if (options.historyIndex !== undefined) {
+          const filePath = fileURLToPath(url);
+          const htmlContent = fs.readFileSync(filePath, 'utf8');
+          const doc = parseHTML(htmlContent);
+
+          this.currentDocument = doc;
+          this.currentUrl = url;
+          this.updateHistory(url, options);
+
+          return {
+            document: doc,
+            url: url,
+            title: doc.title || path.basename(filePath),
+            historyIndex: this.currentIndex,
+            historyLength: this.history.length
+          };
+        } catch (error) {
+          this.logger?.error("Failed to load local file", { error, url });
+          throw error;
+        }
+      } else if (options.historyIndex !== undefined) {
         this.logger?.debug(`Navigating to history index ${options.historyIndex}`);
         if (options.historyIndex >= 0 && options.historyIndex < this.history.length) {
           this.currentIndex = options.historyIndex;
@@ -109,6 +133,8 @@ export class Tab {
           this.logger?.debug(`Truncating history at index ${this.currentIndex}`);
           this.history = this.history.slice(0, this.currentIndex + 1);
         }
+
+        this.updateHistory(url, options);
 
         if (!options.replaceHistory) {
           this.logger?.info(`Added to history: ${url}`);
@@ -167,6 +193,19 @@ export class Tab {
       this.logger?.warn(`URL resolution failed: ${err.message}`, { url });
       console.error(chalk.yellow('URL resolution error:'), err.message);
       return url;
+    }
+  }
+
+  updateHistory(url, options = {}) {
+    if (!options.replaceHistory) {
+      this.logger?.info(`Added to history: ${url}`);
+      this.history.push(url);
+      this.currentIndex = this.history.length - 1;
+
+      if (this.history.length > this.MAX_HISTORY) {
+          this.history.shift();
+          this.currentIndex--;
+      }
     }
   }
 
