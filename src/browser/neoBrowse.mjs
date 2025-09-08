@@ -82,6 +82,7 @@ export class neoBrowse {
         this.warningManager.showWarning(
           url === 'back' ? "Can't go back further!" :
           url === 'forward' ? "Can't go forward further!" :
+          url.startsWith('file:///') ? "Cannot open local file. Please check the logs for more info." :
           url === this.activeTab?.currentUrl ? "You're already on this page!" :
           "Navigation failed"
         );

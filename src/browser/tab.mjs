@@ -72,6 +72,18 @@ export class Tab {
           this.logger?.info("Loading local file", { url });
 
           const filePath = fileURLToPath(url);
+
+          if (!fs.existsSync(filePath)) {
+            this.logger?.error("File does not exist", { filePath });
+            return null;
+          }
+      
+          const ext = path.extname(filePath).toLowerCase();
+          if (ext !== '.html' && ext !== '.htm') {
+            logger?.error("Unsupported file type", { filePath });
+            return null;
+          }
+
           const htmlContent = fs.readFileSync(filePath, 'utf8');
           const doc = parseHTML(htmlContent);
 
@@ -88,7 +100,7 @@ export class Tab {
           };
         } catch (error) {
           this.logger?.error("Failed to load local file", { error, url });
-          throw error;
+          return null;
         }
       } else if (options.historyIndex !== undefined) {
         this.logger?.debug(`Navigating to history index ${options.historyIndex}`);
