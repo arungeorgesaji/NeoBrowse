@@ -1,17 +1,21 @@
 import axios from 'axios';
 import sanitizeHtml from 'sanitize-html';
 import { getLogger } from '../utils/logger.mjs'; 
+import { settingsStorage } from '../browser/settings/settingsStorage.mjs';
 
 export async function fetchHTML(url) {
   const logger = getLogger();
 
   try {
-    const user_agent = 'Mozilla/5.0 (compatible; TUI-Browser/1.0)';
+    const storage = new settingsStorage();
+    const settings = settings.load();
+    const user_agent = settings.user_agent || 'Mozilla/5.0 (compatible; TUI-Browser/1.0)';
+
     logger?.info(`Fetching URL: ${url}`); 
     logger?.debug(`Using User-Agent: ${user_agent}`);
 
     const { data } = await axios.get(url, { 
-      timeout: 10000,
+      timeout: settings.timeout || 10000,
       headers: { 'User-Agent': user_agent },
     });
 

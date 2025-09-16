@@ -1,2 +1,0 @@
-Actually integrate settings
-Add support for files

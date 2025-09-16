@@ -1,11 +1,16 @@
-import { MAX_DEPTH, MAX_NODES } from '../constants/config.mjs';
 import { formatTextByTag } from './textFormatting.mjs';
 import { getLogger } from './logger.mjs'; 
+import { settingsStorage } from '../browser/settings/settingsStorage.mjs';
 
 const nodeCache = new WeakMap();
 
 export function extractText(node, depth = 0, baseUrl = '', context = {}) {
   const logger = getLogger();
+
+  const storage = new settingsStorage();
+  const settings = storage.load();
+  const MAX_DEPTH = settings?.maxDepth || 30;
+  const MAX_NODES = settings?.maxNodes || 10000;
 
   if (depth === 0) {
     context = {

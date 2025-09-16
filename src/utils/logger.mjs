@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
 import { LOG_LEVELS, LOG_LEVEL_NAMES, LOG_COLORS } from '../constants/log.mjs';
+import { settingsStorage } from '../browser/settings/settingsStorage.mjs';
 
 let instance = null;
 
@@ -10,6 +11,8 @@ class logger {
     if (instance) {
       return instance;
     }
+    
+    this.settingsStorage = new settingsStorage();
 
     const configDir = process.env.XDG_CONFIG_HOME || 
       path.join(process.env.HOME || process.env.USERPROFILE, '.config');
@@ -39,7 +42,12 @@ class logger {
     instance = this;
   }
 
+
   formatTime(date) {
+    const settings = this.settingsStorage.load();
+    const hourFormat = settings?.timeFormat || '24h';
+    const hour12 = hourFormat === '12h';
+
     return date.toLocaleString('en-US', {
       year: 'numeric',
       month: '2-digit',
@@ -47,7 +55,7 @@ class logger {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false
+      hour12: hour12 
     }).replace(/\//g, '-').replace(',', '');
   }
 
