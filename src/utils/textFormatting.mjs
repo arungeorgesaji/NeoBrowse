@@ -286,16 +286,36 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
         return chalk.bold(text + ': ');
       case 'dd':
         return '  ' + text + '\n';
+
       case 'table':
-        return '\n' + renderTable(node) + '\n';
+        logger?.debug('Processing table node - returning text content');
+        return `\n[TABLE]\n${text}\n[/TABLE]\n`;
+
+      case 'th':
+      case 'td':
+        logger?.debug('Processing table cell', {
+          tagName,
+          text: text?.substring(0, 50)
+        });
+        return text + ' '; 
+
+      case 'tr':
+        logger?.debug('Processing table row');
+        return text + '\n'; 
+
       case 'thead':
       case 'tbody':
       case 'tfoot':
-      case 'tr':
-        return ''; 
-      case 'th':
-      case 'td':
+        logger?.debug('Processing table structure element', { tagName });
         return text; 
+
+      case 'caption':
+        return chalk.italic.dim(`Table: ${text}\n`);
+
+      case 'col':
+      case 'colgroup':
+        return '';
+
       case 'header':
       case 'main':
       case 'footer':
