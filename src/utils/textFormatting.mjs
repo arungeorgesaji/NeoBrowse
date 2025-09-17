@@ -1,6 +1,5 @@
 import { superScriptMap, subScriptMap } from '../constants/scriptMaps.mjs';
 import { addStructuralSeparator } from '../renderers/structuralRenderer.mjs';
-import { renderImage } from '../renderers/renderImage.mjs';
 import chalk from 'chalk';
 import { getLogger } from './logger.mjs'; 
 
@@ -286,11 +285,9 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
         return chalk.bold(text + ': ');
       case 'dd':
         return '  ' + text + '\n';
-
       case 'table':
         logger?.debug('Processing table node - returning text content');
         return `\n[TABLE]\n${text}\n[/TABLE]\n`;
-
       case 'th':
       case 'td':
         logger?.debug('Processing table cell', {
@@ -298,24 +295,19 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
           text: text?.substring(0, 50)
         });
         return text + ' '; 
-
       case 'tr':
         logger?.debug('Processing table row');
         return text + '\n'; 
-
       case 'thead':
       case 'tbody':
       case 'tfoot':
         logger?.debug('Processing table structure element', { tagName });
         return text; 
-
       case 'caption':
         return chalk.italic.dim(`Table: ${text}\n`);
-
       case 'col':
       case 'colgroup':
         return '';
-
       case 'header':
       case 'main':
       case 'footer':
@@ -366,9 +358,6 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
           context.asyncOperations = [];
         }
         
-        const imagePromise = renderImage(node, baseUrl, logger, context);
-        context.asyncOperations.push(imagePromise);
-        
         let altText = 'Image';
         if (tagName === 'img') {
           altText = node.getAttribute('alt') || 'Image';
@@ -377,21 +366,164 @@ export function formatTextByTag(tagName, text, node, depth = 0, baseUrl = '', co
           altText = imgElement?.getAttribute('alt') || 'Responsive image';
         }
         
-        return `[Loading image: ${altText}...]`;
+        return `[Image: ${altText}...]`;
       }
       case 'audio': {
         if (!context.asyncOperations) {
           context.asyncOperations = [];
         }
         
-        const audioPromise = renderAudio(node, baseUrl, logger, context);
-        context.asyncOperations.push(audioPromise);
-        
         const audioText = node.getAttribute('title') || 
                          node.getAttribute('aria-label') || 
                          'Audio content';
         
         return `[Audio: ${audioText}]`;
+      }
+      case 'video': {
+        const title = node.getAttribute('title') || 
+                     node.getAttribute('aria-label') || 
+                     'Video content';
+        const poster = node.getAttribute('poster') ? ' (with thumbnail)' : '';
+        return `[Video: ${title}${poster}]`;
+      }
+      case 'source': {
+        const src = node.getAttribute('src') || '';
+        const type = node.getAttribute('type') || '';
+        return src ? `[Source: ${src}${type ? ` (${type})` : ''}]` : '';
+      }
+      case 'track': {
+        const kind = node.getAttribute('kind') || 'subtitles';
+        const label = node.getAttribute('label') || '';
+        const srcLang = node.getAttribute('srclang') || '';
+        return `[${kind.charAt(0).toUpperCase() + kind.slice(1)} track${label ? `: ${label}` : ''}${srcLang ? ` (${srcLang})` : ''}]`;
+      }
+      case 'embed': {
+        const type = node.getAttribute('type') || 'plugin';
+        const src = node.getAttribute('src') || '';
+        return `[Embedded ${type}${src ? `: ${src}` : ''}]`;
+      }
+      case 'object': {
+        const data = node.getAttribute('data') || '';
+        const type = node.getAttribute('type') || 'object';
+        return `[Embedded ${type}${data ? `: ${data}` : ''}]`;
+      }
+      case 'iframe': {
+        const src = node.getAttribute('src') || '';
+        const title = node.getAttribute('title') || 'Embedded content';
+        return `[Iframe: ${title}${src ? ` (${src})` : ''}]`;
+      }
+      case 'canvas': {
+        const width = node.getAttribute('width') || '';
+        const height = node.getAttribute('height') || '';
+        const size = width && height ? ` ${width}x${height}` : '';
+        return `[Canvas${size}]`;
+      }
+      case 'form': {
+        const action = node.getAttribute('action') || '';
+        const method = node.getAttribute('method') || 'POST';
+        return `\n[Form: ${method} ${action}]\n${text}\n[/Form]\n`;
+      }
+      case 'input': {
+        const type = node.getAttribute('type') || 'text';
+        const name = node.getAttribute('name') || '';
+        const value = node.getAttribute('value') || '';
+        const placeholder = node.getAttribute('placeholder') || '';
+        
+        switch (type) {
+          case 'submit':
+            return `[Submit: ${value || 'Submit'}]`;
+          case 'button':
+            return `[Button: ${value}]`;
+          case 'checkbox':
+            return `[☐ ${name || 'Checkbox'}]`;
+          case 'radio':
+            return `[○ ${name || 'Radio'}]`;
+          case 'file':
+            return `[📁 File upload]`;
+          case 'password':
+            return `[•••• Password]`;
+          case 'hidden':
+            return ''; 
+          default:
+            return `[${placeholder || name || 'Input'}]`;
+        }
+      }
+      case 'textarea': {
+        const placeholder = node.getAttribute('placeholder') || 'Multiline text';
+        const rows = node.getAttribute('rows') || '3';
+        return `[Textarea: ${placeholder} (${rows} rows)]`;
+      }
+      case 'button': {
+        const type = node.getAttribute('type') || 'button';
+        return `[${type.charAt(0).toUpperCase() + type.slice(1)}: ${text}]`;
+      }
+      case 'select': {
+        const options = node.querySelectorAll('option');
+        const selected = Array.from(options).find(opt => opt.selected);
+        return `[Dropdown: ${selected ? selected.textContent : 'Select...'}]`;
+      }
+      case 'option': {
+        return text; 
+      }
+      case 'label': {
+        const forId = node.getAttribute('for');
+        return chalk.dim(`[Label: ${text}${forId ? ` for #${forId}` : ''}]`);
+      }
+      case 'fieldset': {
+        return `\n[Fieldset]\n${text}\n[/Fieldset]\n`;
+      }
+      case 'legend': {
+        return chalk.bold(`[${text}]\n`);
+      }
+      case 'datalist': {
+        return ''; 
+      }
+      case 'output': {
+        return chalk.green(`[Output: ${text}]`);
+      }
+      case 'map': {
+        const name = node.getAttribute('name') || '';
+        return `[Image map: ${name}]`;
+      }
+      case 'area': {
+        const shape = node.getAttribute('shape') || 'rect';
+        const alt = node.getAttribute('alt') || 'Clickable area';
+        const href = node.getAttribute('href') || '';
+        return `[${shape} area: ${alt}${href ? ` -> ${href}` : ''}]`;
+      }
+      case 'svg': {
+        const width = node.getAttribute('width') || '';
+        const height = node.getAttribute('height') || '';
+        const viewBox = node.getAttribute('viewBox') || '';
+        return `[SVG graphic${width && height ? ` ${width}x${height}` : ''}${viewBox ? ` (${viewBox})` : ''}]`;
+      }
+      case 'math': {
+        return `[MathML content: ${text}]`;
+      }
+      case 'slot': {
+        const name = node.getAttribute('name') || 'default';
+        return `[Slot: ${name}]`;
+      }
+      case 'template': {
+        return ''; 
+      }
+      case 'fencedframe': {
+        return `[Fenced frame: ${node.getAttribute('src') || 'Embedded content'}]`;
+      }
+      case 'selectedcontent': {
+        return text; 
+      }
+      case 'content': {
+        return chalk.yellow('[Obsolete content element]');
+      } 
+      case 'menu': {
+        const type = node.getAttribute('type') || 'context';
+        return `\n[Menu (${type})]\n${text}\n[/Menu]\n`;
+      }
+      case 'menuitem': {
+        const type = node.getAttribute('type') || 'command';
+        const label = node.getAttribute('label') || text;
+        return `[${type}: ${label}]`;
       }
       case 'ruby': {
         const baseText = extractText(node, depth + 1);
