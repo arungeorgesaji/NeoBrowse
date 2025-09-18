@@ -3,6 +3,8 @@
 
 A powerful terminal-based browser with a TUI interface, built with Node.js and Blessed.
 
+> **Linux-Optimized**: NeoBrowse is primarily designed for working with Linux systems. You might face big hurdles while trying it out in any other OS including major rendering issues and even it flat out not running as you have to manually modify the commands to work with your OS.
+
 ## Features
 - TUI interface with keyboard navigation
 - Fast rendering of simplified HTML content
@@ -16,14 +18,11 @@ A powerful terminal-based browser with a TUI interface, built with Node.js and B
 
 ## Quick Start (Recommended)
 
-Run NeoBrowse instantly using Docker - no installation needed:
+Run NeoBrowse instantly using Docker - designed specifically for Linux:
 
 ```bash
 docker pull arunchess/neobrowse:latest && \
-docker run -it --rm \
-  -v "$HOME/my_bookmarks:/app/data" \
-  -e "HOME=/app/data" \
-  arunchess/neobrowse
+docker run -it --rm -u $(id -u):$(id -g) -v "$HOME:$HOME" -e "HOME=$HOME" arunchess/neobrowse
 ```
 
 ### Local Installation
