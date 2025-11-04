@@ -1,4 +1,4 @@
-import blessed from 'blessed';
+import blessed from 'neo-blessed';
 import chalk from 'chalk';
 import { extractText } from '../../utils/domHelpers.mjs';
 import { createScreen, createTabBar, createContainer, createHeader, createURLTextbox, createSearchTextbox } from './tuiComponents.mjs';

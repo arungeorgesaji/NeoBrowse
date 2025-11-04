@@ -9,7 +9,7 @@ export async function fetchHTML(url) {
   try {
     const storage = new settingsStorage();
     const settings = storage.load();
-    const user_agent = settings.user_agent || 'Mozilla/5.0 (compatible; TUI-Browser/1.0)';
+    const user_agent = settings.userAgent || 'Mozilla/5.0 (compatible; TUI-Browser/1.0)';
 
     logger?.info(`Fetching URL: ${url}`); 
     logger?.debug(`Using User-Agent: ${user_agent}`);

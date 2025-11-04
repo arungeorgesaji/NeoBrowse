@@ -1,4 +1,4 @@
-import blessed from 'blessed';
+import blessed from 'neo-blessed';
 import { bindKey } from '../renderers/tuiRenderer/tuiHandlers.mjs';
 import { LOG_LEVELS, LOG_LEVEL_NAMES, LOG_COLORS, LOG_KEY_BINDINGS } from '../constants/log.mjs';
 import chalk from 'chalk';

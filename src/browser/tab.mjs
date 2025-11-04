@@ -6,18 +6,23 @@ import fs from 'fs';
 import path from 'path';
 import { getLogger } from '../utils/logger.mjs'; 
 import { fileURLToPath } from 'url';
+import { settingsStorage } from './settings/settingsStorage.mjs';
+
 
 export class Tab {
   constructor() {
     this.history = []; 
     this.logger = getLogger();
     this.currentIndex = -1; 
-    this.currentUrl = 'https://arungeorgesaji.is-a.dev/NeoBrowse/';
+    this.currentUrl = 'https://arungeorgesaji.github.io/NeoBrowse/';
     this.currentDocument = null;
     this.active = false;
     this.MAX_HISTORY = 100;
 
     this.logger?.info(`New tab created with homepage: ${this.currentUrl}`);
+
+    const storage = new settingsStorage();
+    this.settings = storage.load();
   }
 
   async isUrl(input) {
@@ -50,7 +55,8 @@ export class Tab {
         throw new Error('Invalid URL');
       }
 
-      if (url === 'https://arungeorgesaji.is-a.dev/NeoBrowse/') {
+      if (url === 'https://arungeorgesaji.github.io/NeoBrowse/') {
+
         this.logger?.info("Loading NeoBrowse homepage");
         const homepagePath = path.join(process.cwd(), 'index.html');
         const htmlContent = fs.readFileSync(homepagePath, 'utf8');
@@ -133,30 +139,32 @@ export class Tab {
         }
         url = this.currentUrl;
       } else {
-        url = this.resolveUrl(url);
-
         if (!(await this.isUrl(url))) {
           this.logger?.info(`Treating input as search query: ${url}`);
           const searchQuery = encodeURIComponent(url);
-          url = `https://searx.be/search?q=${searchQuery}&format=html`;
-        }
+
+          const engine = this.settings.searchEngine || 'https://searx.be/search?q={query}&format=html';
+          url = engine.includes('{query}') ? engine.replace('{query}', searchQuery) : `${engine}${searchQuery}`;
         
-        if (!options.preserveHistory && this.currentIndex < this.history.length - 1) {
-          this.logger?.debug(`Truncating history at index ${this.currentIndex}`);
-          this.history = this.history.slice(0, this.currentIndex + 1);
-        }
-
-        this.updateHistory(url, options);
-
-        if (!options.replaceHistory) {
-          this.logger?.info(`Added to history: ${url}`);
-          this.history.push(url);
-          this.currentIndex = this.history.length - 1;
-          
-          if (this.history.length > this.MAX_HISTORY) {
-            this.history.shift();
-            this.currentIndex--;
+          if (!options.preserveHistory && this.currentIndex < this.history.length - 1) {
+            this.logger?.debug(`Truncating history at index ${this.currentIndex}`);
+            this.history = this.history.slice(0, this.currentIndex + 1);
           }
+
+          this.updateHistory(url, options);
+
+          if (!options.replaceHistory) {
+            this.logger?.info(`Added to history: ${url}`);
+            this.history.push(url);
+            this.currentIndex = this.history.length - 1;
+            
+            if (this.history.length > this.MAX_HISTORY) {
+              this.history.shift();
+              this.currentIndex--;
+            }
+          }
+        } else {
+           url = this.resolveUrl(url);
         }
       }
 

@@ -133,11 +133,10 @@ export function setupHandlers({
       searchInput.hide();
       container.focus();
       if (value) {
-        const searchQuery = encodeURIComponent(value);
         logger?.info('Searching', {
           query: value.substring(0, 50) + (value.length > 50 ? '...' : '')
         });
-        onNavigate(`https://searx.be/search?q=${searchQuery}&format=html`);
+        onNavigate(value);
       } else if (err) {
         logger?.error('Search input error', {
           error: err.message

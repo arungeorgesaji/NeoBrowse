@@ -1,4 +1,4 @@
-import blessed from 'blessed';
+import blessed from 'neo-blessed';
 import { bindKey } from '../../renderers/tuiRenderer/tuiHandlers.mjs';
 import { SEARCH_ENGINES, USER_AGENTS, TIME_FORMATS } from '../../constants/settingsConfig.mjs';
 import { createFooter } from '../../renderers/tuiRenderer/tuiComponents.mjs';

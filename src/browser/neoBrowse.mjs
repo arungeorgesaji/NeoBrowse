@@ -10,7 +10,7 @@ import { getLogger } from '../utils/logger.mjs';
 import { debugPanel } from '../utils/debugPanel.mjs'; 
 import { warningManager } from '../utils/warningManager.mjs';
 import chalk from 'chalk';
-import blessed from 'blessed';
+import blessed from 'neo-blessed';
 
 export class neoBrowse {
   constructor() {
@@ -95,7 +95,7 @@ export class neoBrowse {
     }
   }
 
-  async newTab(url = 'https://arungeorgesaji.is-a.dev/NeoBrowse/') {
+  async newTab(url = 'https://arungeorgesaji.github.io/NeoBrowse/') {
     const newTab = new Tab();
     this.tabs.push(newTab);
     this.tabs.forEach(tab => tab.active = false);

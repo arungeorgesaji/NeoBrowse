@@ -1,4 +1,4 @@
-import blessed from 'blessed';
+import blessed from 'neo-blessed';
 import chalk from 'chalk';
 import { getLogger } from '../../utils/logger.mjs'; 
 

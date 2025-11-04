@@ -22,7 +22,7 @@ Run NeoBrowse instantly using Docker - designed specifically for Linux:
 
 ```bash
 docker pull arunchess/neobrowse:latest && \
-docker run -it --rm -u $(id -u):$(id -g) -v "$HOME:$HOME" -e "HOME=$HOME" arunchess/neobrowse
+docker run -it --rm --network=host -u $(id -u):$(id -g) -v "$HOME:$HOME" -e "HOME=$HOME" arunchess/neobrowse
 ```
 
 ### Local Installation
