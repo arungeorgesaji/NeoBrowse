@@ -145,26 +145,15 @@ export class Tab {
 
           const engine = this.settings.searchEngine || 'https://searx.be/search?q={query}&format=html';
           url = engine.includes('{query}') ? engine.replace('{query}', searchQuery) : `${engine}${searchQuery}`;
-        
+
           if (!options.preserveHistory && this.currentIndex < this.history.length - 1) {
             this.logger?.debug(`Truncating history at index ${this.currentIndex}`);
             this.history = this.history.slice(0, this.currentIndex + 1);
           }
 
           this.updateHistory(url, options);
-
-          if (!options.replaceHistory) {
-            this.logger?.info(`Added to history: ${url}`);
-            this.history.push(url);
-            this.currentIndex = this.history.length - 1;
-            
-            if (this.history.length > this.MAX_HISTORY) {
-              this.history.shift();
-              this.currentIndex--;
-            }
-          }
         } else {
-           url = this.resolveUrl(url);
+          url = this.resolveUrl(url);
         }
       }
 

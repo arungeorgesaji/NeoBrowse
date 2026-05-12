@@ -24,6 +24,7 @@ class logger {
 
     this.logFilePath = options.logFilePath || path.join(appDir, 'debug.log');
     this.maxFileLines = options.maxFileLines || 100000;
+    this.maxSessionLogs = options.maxSessionLogs || 2000;
     this.sessionLogs = [];
     this.allLogsCount = 0;
     this.clearedCount = 0;
@@ -72,6 +73,7 @@ class logger {
 
   log(message, level = LOG_LEVELS.INFO, metadata = {}) {
     if (this.logFilter && !message.match(this.logFilter)) return;
+    if (!this.shouldLog(level)) return;
 
     const timestamp = this.formatTime(new Date());
     const entry = {
@@ -82,6 +84,10 @@ class logger {
     };
 
     this.sessionLogs.push(entry);
+    const overflow = this.sessionLogs.length - this.maxSessionLogs;
+    if (overflow > 0) {
+      this.sessionLogs.splice(0, overflow);
+    }
     
     const fileEntry = `[${timestamp}] [${LOG_LEVEL_NAMES[level]}] ${message}`;
     fs.appendFileSync(this.logFilePath, fileEntry + '\n');
@@ -90,6 +96,10 @@ class logger {
     if (this.allLogsCount > this.maxFileLines) {
       this.trimLogFile();
     }
+  }
+
+  shouldLog(level) {
+    return level >= this.logLevel;
   }
 
   debug(message, metadata) {
